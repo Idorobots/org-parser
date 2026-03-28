@@ -25,5 +25,6 @@ All of the above are supported in the Tree-Sitter grammar as well as in the Pyth
 :LOGBOOK:
 - State "DONE"       from              [2026-03-28 Sat 17:48]
 :END:
+** Automated tests based on the example files.
 ** Semantic node documentation
 ** Library release
