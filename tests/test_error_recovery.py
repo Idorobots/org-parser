@@ -408,3 +408,17 @@ class TestZerothSectionErrorRecovery:
         doc = _parse_source("#+TITLE: Doc\n<<unclosed\n* Heading\n")
         assert doc.title is not None
         assert str(doc.title) == "Doc"
+
+
+class TestObjectInternalErrorPercolation:
+    """Errors nested inside semantic objects are reported on document."""
+
+    def test_invalid_planning_timestamp_reports_document_error(self) -> None:
+        """Planning timestamps with internal parse errors percolate to document."""
+        doc = _parse_source("* Heading\nSCHEDULED: <2025-12-12, at some point>\n")
+        assert any(error.text == ", at some point" for error in doc.errors)
+
+    def test_invalid_clock_timestamp_reports_document_error(self) -> None:
+        """Clock timestamps with internal parse errors percolate to document."""
+        doc = _parse_source("CLOCK: [2025-12-12, at some point]\n")
+        assert any(error.text == ", at some point" for error in doc.errors)

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from org_parser.element._element import build_semantic_repr
+from org_parser._node import report_internal_parse_errors
 from org_parser._nodes import (
     TIMESTAMP,
     TS_DAY,
@@ -19,6 +19,7 @@ from org_parser._nodes import (
     TS_TIME,
     TS_YEAR,
 )
+from org_parser.element._element import build_semantic_repr
 
 if TYPE_CHECKING:
     import tree_sitter
@@ -105,6 +106,7 @@ class Timestamp:
     @classmethod
     def from_node(cls, node: tree_sitter.Node, document: Document) -> Timestamp:
         """Create a :class:`Timestamp` from a tree-sitter timestamp-like node."""
+        report_internal_parse_errors(node, document)
         raw = _extract_raw_timestamp_text(node, document)
         is_active = raw.startswith("<")
 

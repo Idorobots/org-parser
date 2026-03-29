@@ -12,7 +12,10 @@ Timestamp(raw='<2025-12-12, at some point>', is_active=True, start_year=2025, st
 
 Ideally, the representation would mimic what is done for the other elements - omit the =raw= portion and any fields that are =None=.
 
-** TODO Object-internal errors don't percolate to the document
+** DONE Object-internal errors don't percolate to the document
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-03-29 Sun 20:45]
+:END:
 #+begin_example
 ,* Heading
 SCHEDULED: <2025-12-12, at some point>
