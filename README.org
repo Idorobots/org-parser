@@ -2,27 +2,13 @@
 #+OPTIONS: toc:t
 
 * Overview
-This project implements a Tree-Sitter-based parser for Emacs Org-Mode files
-with a Python wrapper providing "nicer" semantic nodes.
+This project implements a Python parser for Emacs Org-Mode files
+providing "nice" semantic nodes. It's based on the following Tree-Sitter grammar:
 
-The long-term goal is high fidelity and eventually 100% feature coverage, while
-keeping robust error recovery and useful parse trees for downstream processing.
+https://github.com/Idorobots/tree-sitter-org
 
 * Supported features
-Parsing [[examples/showcase.org][this file]] results in [[examples/showcase.tree-sitter][the following parse tree]] and [[examples/showcase.python][Python object layout]].
-
-* Gotchas
-- Table.el tables parse as verbatim blocks of text. Their contents are inaccessible.
-- Malformed objects are usually treated as plaintext or recovered with generic
-  parse-error nodes.
-
-* Explicitly Not Supported
-- Inline tasks are not represented as a dedicated node type,
-  they are treated as regular headings.
-- Sexp timestamps (like =<%%(...)>=) are not parsed as regular timestamp nodes,
-  they are plain text instead.
-- LaTeX fragments & environments are not parsed as structured Org objects,
-  they are plain text instead.
+Parsing [[examples/showcase.org][this file]] results in the following [[examples/showcase.python][Python object layout]].
 
 * Roadmap
 See [[file:ROADMAP.org][ROADMAP.org]] for planned work and milestone history.

@@ -3,6 +3,7 @@ FROM ubuntu:26.04
 # Install common utilities
 RUN apt-get update && apt-get install -y \
     python-is-python3 \
+    python3-dev \
     pipx \
     bash \
     curl \
