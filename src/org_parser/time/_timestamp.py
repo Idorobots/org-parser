@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from org_parser.element._element import build_semantic_repr
 from org_parser._nodes import (
     TIMESTAMP,
     TS_DAY,
@@ -201,6 +202,25 @@ class Timestamp:
         if not self._dirty:
             return self.raw
         return _render_timestamp(self)
+
+    def __repr__(self) -> str:
+        """Return a developer-friendly semantic representation."""
+        return build_semantic_repr(
+            "Timestamp",
+            is_active=self.is_active,
+            start_year=self.start_year,
+            start_month=self.start_month,
+            start_day=self.start_day,
+            start_dayname=self.start_dayname,
+            start_hour=self.start_hour,
+            start_minute=self.start_minute,
+            end_year=self.end_year,
+            end_month=self.end_month,
+            end_day=self.end_day,
+            end_dayname=self.end_dayname,
+            end_hour=self.end_hour,
+            end_minute=self.end_minute,
+        )
 
     @property
     def dirty(self) -> bool:

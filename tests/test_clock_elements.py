@@ -136,6 +136,8 @@ def test_clock_repr_includes_timestamp_and_duration() -> None:
     assert r.startswith("Clock(")
     assert "timestamp=" in r
     assert "duration='2:00'" in r
+    assert "raw=" not in r
+    assert "end_year=" not in r
 
 
 def test_clock_repr_omits_none_fields() -> None:

@@ -1,6 +1,25 @@
 #+TITLE: A Python parser for Org Mode nodes
 #+ARCHIVE: ./docs/plans/ROADMAP_ARCHIVE.org::
 
+* Bugfixes
+** DONE Timestamp repr should omit None values
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-03-29 Sun 20:33]
+:END:
+#+begin_example
+Timestamp(raw='<2025-12-12, at some point>', is_active=True, start_year=2025, start_month=12, start_day=12, start_dayname=None, start_hour=None, start_minute=None, end_year=None, end_month=None, end_day=None, end_dayname=None, end_hour=None, end_minute=None)
+#+end_example
+
+Ideally, the representation would mimic what is done for the other elements - omit the =raw= portion and any fields that are =None=.
+
+** TODO Object-internal errors don't percolate to the document
+#+begin_example
+,* Heading
+SCHEDULED: <2025-12-12, at some point>
+#+end_example
+
+The timestamp is parsed with an error, but it's not available in =document.errors= property.
+
 * Initial release
 ** DONE Supported syntax in the README.org
 :LOGBOOK:
@@ -25,6 +44,7 @@ All of the above are supported in the Tree-Sitter grammar as well as in the Pyth
 :LOGBOOK:
 - State "DONE"       from              [2026-03-28 Sat 17:48]
 :END:
+** TODO Usage documentation in the README
 ** Automated tests based on the example files.
-** Semantic node documentation
+** Semantic node API documentation
 ** Library release
