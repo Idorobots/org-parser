@@ -159,18 +159,19 @@ class _TextBlock(Element):
 class CenterBlock(_ContainerBlock):
     r"""``#+begin_center`` block with mutable nested element contents.
 
-    Example::
-
-        >>> from org_parser.element import CenterBlock
-        >>> b = CenterBlock.from_source('''\
-        ... #+begin_center :width 60
-        ... content
-        ... #+end_center
-        ... ''')
-        >>> b.parameters
-        ':width 60'
-        >>> b.body_text
-        'content\n'
+    Example:
+    ```python
+    >>> from org_parser.element import CenterBlock
+    >>> b = CenterBlock.from_source('''\
+    ... #+begin_center :width 60
+    ... content
+    ... #+end_center
+    ... ''')
+    >>> b.parameters
+    ':width 60'
+    >>> b.body_text
+    'content\n'
+    ```
     """
 
     def __init__(
@@ -196,7 +197,7 @@ class CenterBlock(_ContainerBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> CenterBlock:
-        """Create a :class:`CenterBlock` from a ``center_block`` node."""
+        """Create a [org_parser.element.CenterBlock][] from a ``center_block`` node."""
         source_text = node_source(node, document)
         block = cls(
             parameters=_extract_optional_field_text(node, document, "parameters")
@@ -232,18 +233,19 @@ class CenterBlock(_ContainerBlock):
 class QuoteBlock(_ContainerBlock):
     r"""``#+begin_quote`` block with mutable nested element contents.
 
-    Example::
-
-        >>> from org_parser.element import QuoteBlock
-        >>> b = QuoteBlock.from_source('''\
-        ... #+begin_quote :left
-        ... content
-        ... #+end_quote
-        ... ''')
-        >>> b.parameters
-        ':left'
-        >>> b.body_text
-        'content\n'
+    Example:
+    ```python
+    >>> from org_parser.element import QuoteBlock
+    >>> b = QuoteBlock.from_source('''\
+    ... #+begin_quote :left
+    ... content
+    ... #+end_quote
+    ... ''')
+    >>> b.parameters
+    ':left'
+    >>> b.body_text
+    'content\n'
+    ```
     """
 
     def __init__(
@@ -269,7 +271,7 @@ class QuoteBlock(_ContainerBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> QuoteBlock:
-        """Create a :class:`QuoteBlock` from a ``quote_block`` node."""
+        """Create a [org_parser.element.QuoteBlock][] from a ``quote_block`` node."""
         source_text = node_source(node, document)
         block = cls(
             parameters=_extract_optional_field_text(node, document, "parameters")
@@ -305,20 +307,21 @@ class QuoteBlock(_ContainerBlock):
 class SpecialBlock(_ContainerBlock):
     r"""``#+begin_<name>`` block with mutable nested element contents.
 
-    Example::
-
-        >>> from org_parser.element import SpecialBlock
-        >>> b = SpecialBlock.from_source('''\
-        ... #+begin_NOTE :notes
-        ... content
-        ... #+end_NOTE
-        ... ''')
-        >>> b.name
-        'NOTE'
-        >>> b.parameters
-        ':notes'
-        >>> b.body_text
-        'content\n'
+    Example:
+    ```python
+    >>> from org_parser.element import SpecialBlock
+    >>> b = SpecialBlock.from_source('''\
+    ... #+begin_NOTE :notes
+    ... content
+    ... #+end_NOTE
+    ... ''')
+    >>> b.name
+    'NOTE'
+    >>> b.parameters
+    ':notes'
+    >>> b.body_text
+    'content\n'
+    ```
     """
 
     def __init__(
@@ -346,7 +349,7 @@ class SpecialBlock(_ContainerBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> SpecialBlock:
-        """Create a :class:`SpecialBlock` from a ``special_block`` node."""
+        """Create a [org_parser.element.SpecialBlock][] from a ``special_block`` node."""
         source_text = node_source(node, document)
         name = _extract_optional_field_text(node, document, "name")
         parsed_name, parsed_parameters = _extract_special_begin_data(source_text)
@@ -399,20 +402,21 @@ class SpecialBlock(_ContainerBlock):
 class DynamicBlock(_ContainerBlock):
     r"""``#+begin:`` dynamic block with mutable nested element contents.
 
-    Example::
-
-        >>> from org_parser.element import DynamicBlock
-        >>> b = DynamicBlock.from_source('''\
-        ... #+begin: notes :value
-        ... content
-        ... #+end:
-        ... ''')
-        >>> b.name
-        'notes'
-        >>> b.parameters
-        ':value'
-        >>> b.body_text
-        'content\n'
+    Example:
+    ```python
+    >>> from org_parser.element import DynamicBlock
+    >>> b = DynamicBlock.from_source('''\
+    ... #+begin: notes :value
+    ... content
+    ... #+end:
+    ... ''')
+    >>> b.name
+    'notes'
+    >>> b.parameters
+    ':value'
+    >>> b.body_text
+    'content\n'
+    ```
     """
 
     def __init__(
@@ -440,7 +444,7 @@ class DynamicBlock(_ContainerBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> DynamicBlock:
-        """Create a :class:`DynamicBlock` from a ``dynamic_block`` node."""
+        """Create a [org_parser.element.DynamicBlock][] from a ``dynamic_block`` node."""
         source_text = node_source(node, document)
         name = _extract_optional_field_text(node, document, "name")
         parsed_name, parsed_parameters = _extract_dynamic_begin_data(source_text)
@@ -492,16 +496,17 @@ class DynamicBlock(_ContainerBlock):
 class VerseBlock(_ContainerBlock):
     r"""``#+begin_verse`` block with mutable nested element contents.
 
-    Example::
-
-        >>> from org_parser.element import VerseBlock
-        >>> b = VerseBlock.from_source('''\
-        ... #+begin_verse
-        ... content
-        ... #+end_verse
-        ... ''')
-        >>> b.body_text
-        'content\n'
+    Example:
+    ```python
+    >>> from org_parser.element import VerseBlock
+    >>> b = VerseBlock.from_source('''\
+    ... #+begin_verse
+    ... content
+    ... #+end_verse
+    ... ''')
+    >>> b.body_text
+    'content\n'
+    ```
     """
 
     def __init__(
@@ -525,7 +530,7 @@ class VerseBlock(_ContainerBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> VerseBlock:
-        """Create a :class:`VerseBlock` from a ``verse_block`` node."""
+        """Create a [org_parser.element.VerseBlock][] from a ``verse_block`` node."""
         block = cls(
             body=_extract_container_contents(node, document),
             parent=parent,
@@ -542,16 +547,17 @@ class VerseBlock(_ContainerBlock):
 class CommentBlock(_TextBlock):
     r"""``#+begin_comment`` block with mutable raw text contents.
 
-    Example::
-
-        >>> from org_parser.element import CommentBlock
-        >>> b = CommentBlock.from_source('''\
-        ... #+begin_comment
-        ... content
-        ... #+end_comment
-        ... ''')
-        >>> b.body
-        'content\n'
+    Example:
+    ```python
+    >>> from org_parser.element import CommentBlock
+    >>> b = CommentBlock.from_source('''\
+    ... #+begin_comment
+    ... content
+    ... #+end_comment
+    ... ''')
+    >>> b.body
+    'content\n'
+    ```
     """
 
     def __init__(
@@ -575,7 +581,7 @@ class CommentBlock(_TextBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> CommentBlock:
-        """Create a :class:`CommentBlock` from a ``comment_block`` node."""
+        """Create a [org_parser.element.CommentBlock][] from a ``comment_block`` node."""
         block = cls(
             body=_extract_optional_field_text(node, document, "body") or "",
             parent=parent,
@@ -592,18 +598,19 @@ class CommentBlock(_TextBlock):
 class ExampleBlock(_TextBlock):
     r"""``#+begin_example`` block with mutable raw text contents.
 
-    Example::
-
-        >>> from org_parser.element import ExampleBlock
-        >>> b = ExampleBlock.from_source('''\
-        ... #+begin_example :param
-        ... content
-        ... #+end_example
-        ... ''')
-        >>> b.body
-        'content\n'
-        >>> b.parameters
-        ':param'
+    Example:
+    ```python
+    >>> from org_parser.element import ExampleBlock
+    >>> b = ExampleBlock.from_source('''\
+    ... #+begin_example :param
+    ... content
+    ... #+end_example
+    ... ''')
+    >>> b.body
+    'content\n'
+    >>> b.parameters
+    ':param'
+    ```
     """
 
     def __init__(
@@ -629,7 +636,7 @@ class ExampleBlock(_TextBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> ExampleBlock:
-        """Create a :class:`ExampleBlock` from an ``example_block`` node."""
+        """Create a [org_parser.element.ExampleBlock][] from an ``example_block`` node."""
         source_text = node_source(node, document)
         block = cls(
             parameters=_extract_optional_field_text(node, document, "parameters")
@@ -666,20 +673,21 @@ class ExampleBlock(_TextBlock):
 class ExportBlock(_TextBlock):
     r"""``#+begin_export`` block with mutable raw text contents.
 
-    Example::
-
-        >>> from org_parser.element import ExportBlock
-        >>> b = ExportBlock.from_source('''\
-        ... #+begin_export  markdown:gfm
-        ... # content
-        ... #+end_export
-        ... ''')
-        >>> b.body
-        '# content\n'
-        >>> b.parameters
-        ':gfm'
-        >>> b.backend
-        'markdown'
+    Example:
+    ```python
+    >>> from org_parser.element import ExportBlock
+    >>> b = ExportBlock.from_source('''\
+    ... #+begin_export  markdown:gfm
+    ... # content
+    ... #+end_export
+    ... ''')
+    >>> b.body
+    '# content\n'
+    >>> b.parameters
+    ':gfm'
+    >>> b.backend
+    'markdown'
+    ```
     """
 
     def __init__(
@@ -707,7 +715,7 @@ class ExportBlock(_TextBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> ExportBlock:
-        """Create a :class:`ExportBlock` from an ``export_block`` node."""
+        """Create a [org_parser.element.ExportBlock][] from an ``export_block`` node."""
         source_text = node_source(node, document)
         backend = _extract_optional_field_text(node, document, "backend")
         parsed_backend, parsed_parameters = _extract_export_begin_data(source_text)
@@ -759,20 +767,21 @@ class ExportBlock(_TextBlock):
 class SourceBlock(_TextBlock):
     r"""``#+begin_src`` block with mutable source text contents.
 
-    Example::
-
-        >>> from org_parser.element import SourceBlock
-        >>> b = SourceBlock.from_source('''\
-        ... #+begin_src  python :export stdout
-        ... print("Hello world!")
-        ... #+end_src
-        ... ''')
-        >>> b.body
-        '# print("Hello world!")\n'
-        >>> b.switches
-        ':export stdout'
-        >>> b.language
-        'python'
+    Example:
+    ```python
+    >>> from org_parser.element import SourceBlock
+    >>> b = SourceBlock.from_source('''\
+    ... #+begin_src  python :export stdout
+    ... print("Hello world!")
+    ... #+end_src
+    ... ''')
+    >>> b.body
+    '# print("Hello world!")\n'
+    >>> b.switches
+    ':export stdout'
+    >>> b.language
+    'python'
+    ```
     """
 
     def __init__(
@@ -800,7 +809,7 @@ class SourceBlock(_TextBlock):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> SourceBlock:
-        """Create a :class:`SourceBlock` from a ``src_block`` node."""
+        """Create a [org_parser.element.SourceBlock][] from a ``src_block`` node."""
         source_text = node_source(node, document)
         parsed_language, parsed_switches = _extract_source_begin_data(source_text)
         block = cls(
@@ -851,12 +860,13 @@ class SourceBlock(_TextBlock):
 class FixedWidthBlock(Element):
     r"""Fixed-width area line with mutable content text.
 
-    Example::
-
-        >>> from org_parser.element import FixedWidthBlock
-        >>> b = FixedWidthBlock.from_source(": content\n")
-        >>> b.body
-        'content\n'
+    Example:
+    ```python
+    >>> from org_parser.element import FixedWidthBlock
+    >>> b = FixedWidthBlock.from_source(": content\n")
+    >>> b.body
+    'content\n'
+    ```
     """
 
     def __init__(
@@ -876,7 +886,7 @@ class FixedWidthBlock(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> FixedWidthBlock:
-        """Create a :class:`FixedWidthBlock` from a ``fixed_width`` node."""
+        """Create a [org_parser.element.FixedWidthBlock][] from a ``fixed_width`` node."""
         block = cls(
             body=_extract_optional_field_text(node, document, "value") or "",
             parent=parent,
@@ -919,8 +929,8 @@ def _extract_container_contents(
     """Extract nested body elements for container-style blocks.
 
     Elements are constructed with ``parent=None``; the containing
-    :class:`_ContainerBlock` assigns the correct parent via
-    :meth:`_adopt_body` after construction.
+    [org_parser.element._block._ContainerBlock][] assigns the correct parent via
+    [org_parser.element._block._ContainerBlock._adopt_body][] after construction.
     """
     elements = [
         _extract_nested_element(child, document, parent=None)
@@ -961,7 +971,7 @@ def _extract_indent(
     *,
     parent: Document | Heading | Element | None = None,
 ) -> Indent:
-    """Build one nested :class:`Indent` from an ``indent`` node."""
+    """Build one nested [org_parser.element.Indent][] from an ``indent`` node."""
     return Indent.from_node(node, document, parent=parent, child_factory=_extract_nested_element)
 
 

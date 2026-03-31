@@ -1,4 +1,4 @@
-"""Implementation of :class:`RichText` and inline object parsing.
+"""Implementation of [org_parser.text.RichText][] and inline object parsing.
 
 `RichText` stores a sequence of inline object abstractions while preserving the
 ability to emit the verbatim source slice from the parse tree until mutation.
@@ -90,12 +90,13 @@ class RichText:
         text_or_parts: Initial content as a plain string or an explicit list of
             inline object abstractions.
 
-    Example::
-
-        >>> from org_parser.text import RichText
-        >>> text = RichText.from_source("Use *bold* text")
-        >>> text.parts[1].raw
-        '*bold*'
+    Example:
+    ```python
+    >>> from org_parser.text import RichText
+    >>> text = RichText.from_source("Use *bold* text")
+    >>> text.parts[1].raw
+    '*bold*'
+    ```
     """
 
     def __init__(
@@ -117,12 +118,13 @@ class RichText:
     def parts(self) -> list[InlineObject]:
         """Inline object parts in source order.
 
-        Example::
-
-            >>> from org_parser.text import RichText
-            >>> text = RichText.from_source("Use *bold* text")
-            >>> len(text.parts)
-            4
+        Example:
+        ```python
+        >>> from org_parser.text import RichText
+        >>> text = RichText.from_source("Use *bold* text")
+        >>> len(text.parts)
+        4
+        ```
         """
         return self._parts
 
@@ -130,15 +132,16 @@ class RichText:
     def text(self) -> str:
         """Textual representation of this rich text.
 
-        Example::
-
-            >>> from org_parser.text import RichText
-            >>> text = RichText.from_source("Use *bold* text")
-            >>> text.text
-            'Use *bold* text'
-            >>> text.text = "updated"
-            >>> text.text
-            'updated'
+        Example:
+        ```python
+        >>> from org_parser.text import RichText
+        >>> text = RichText.from_source("Use *bold* text")
+        >>> text.text
+        'Use *bold* text'
+        >>> text.text = "updated"
+        >>> text.text
+        'updated'
+        ```
         """
         return str(self)
 
@@ -182,13 +185,14 @@ class RichText:
     def append(self, part: InlineObject | str) -> None:
         """Append content.
 
-        Example::
-
-            >>> from org_parser.text import RichText
-            >>> text = RichText("A")
-            >>> text.append("B")
-            >>> text.text
-            'AB'
+        Example:
+        ```python
+        >>> from org_parser.text import RichText
+        >>> text = RichText("A")
+        >>> text.append("B")
+        >>> text.text
+        'AB'
+        ```
         """
         self._parts.append(_coerce_inline_object(part))
         self.mark_dirty()
@@ -196,13 +200,14 @@ class RichText:
     def prepend(self, part: InlineObject | str) -> None:
         """Prepend content.
 
-        Example::
-
-            >>> from org_parser.text import RichText
-            >>> text = RichText("B")
-            >>> text.prepend("A")
-            >>> text.text
-            'AB'
+        Example:
+        ```python
+        >>> from org_parser.text import RichText
+        >>> text = RichText("B")
+        >>> text.prepend("A")
+        >>> text.text
+        'AB'
+        ```
         """
         self._parts.insert(0, _coerce_inline_object(part))
         self.mark_dirty()
@@ -210,13 +215,14 @@ class RichText:
     def insert(self, index: int, part: InlineObject | str) -> None:
         """Insert content at *index*.
 
-        Example::
-
-            >>> from org_parser.text import RichText, PlainText
-            >>> text = RichText("AC")
-            >>> text.insert(0, "B")
-            >>> text.text
-            'BAC'
+        Example:
+        ```python
+        >>> from org_parser.text import RichText, PlainText
+        >>> text = RichText("AC")
+        >>> text.insert(0, "B")
+        >>> text.text
+        'BAC'
+        ```
         """
         self._parts.insert(index, _coerce_inline_object(part))
         self.mark_dirty()
@@ -225,7 +231,7 @@ class RichText:
 
     @classmethod
     def from_source(cls, source: str) -> RichText:
-        """Parse *source* and return one strict :class:`RichText` value.
+        """Parse *source* and return one strict [org_parser.text.RichText][] value.
 
         The source must parse to exactly one paragraph element and no headings
         or zeroth-section metadata.
@@ -234,7 +240,7 @@ class RichText:
             source: Org source text containing one rich-text paragraph.
 
         Returns:
-            Parsed :class:`RichText` for the paragraph content.
+            Parsed [org_parser.text.RichText][] for the paragraph content.
 
         Raises:
             ValueError: If parsing fails or the structure is not one paragraph.
@@ -255,11 +261,11 @@ class RichText:
         document: Document,
         parent: Document | Heading | Element | None = None,
     ) -> RichText:
-        """Create a :class:`RichText` from a single tree-sitter node.
+        """Create a [org_parser.text.RichText][] from a single tree-sitter node.
 
         Args:
             node: The tree-sitter node to parse.
-            document: The owning :class:`Document`.
+            document: The owning [org_parser.document.Document][].
             parent: Optional parent owner object.
         """
         if node.type == PARAGRAPH:
@@ -279,11 +285,11 @@ class RichText:
         document: Document,
         parent: Document | Heading | Element | None = None,
     ) -> RichText:
-        """Create a :class:`RichText` from multiple contiguous nodes.
+        """Create a [org_parser.text.RichText][] from multiple contiguous nodes.
 
         Args:
             nodes: Ordered sequence of tree-sitter nodes to parse.
-            document: The owning :class:`Document`.
+            document: The owning [org_parser.document.Document][].
             parent: Optional parent owner object.
         """
         parts = _parse_inline_nodes(nodes, document)
@@ -330,7 +336,7 @@ class RichText:
 
 
 def _coerce_inline_object(part: InlineObject | str) -> InlineObject:
-    """Convert plain strings to :class:`PlainText` inline objects."""
+    """Convert plain strings to [org_parser.text.PlainText][] inline objects."""
     if isinstance(part, str):
         return PlainText(part)
     return part
@@ -344,7 +350,7 @@ def _parse_inline_nodes(
 
     Args:
         nodes: Ordered sequence of tree-sitter inline nodes.
-        document: The owning :class:`Document`.
+        document: The owning [org_parser.document.Document][].
     """
     return [_parse_inline_node(node, document) for node in nodes]
 
@@ -357,7 +363,7 @@ def _parse_inline_node(  # noqa: PLR0911,PLR0912,PLR0915
 
     Args:
         node: A single inline tree-sitter node.
-        document: The owning :class:`Document`.
+        document: The owning [org_parser.document.Document][].
     """
     node_type = node.type
     text = document.source_for(node).decode()

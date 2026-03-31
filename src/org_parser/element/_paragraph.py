@@ -1,4 +1,4 @@
-"""Implementation of :class:`Paragraph` for Org paragraph elements."""
+"""Implementation of [org_parser.element.Paragraph][] for Org paragraph elements."""
 
 from __future__ import annotations
 
@@ -23,12 +23,13 @@ class Paragraph(Element):
         body: Parsed paragraph body rich text.
         parent: Optional parent owner object.
 
-    Example::
-
-        >>> from org_parser.element import Paragraph
-        >>> paragraph = Paragraph.from_source("Paragraph text")
-        >>> paragraph.body_text
-        'Paragraph text'
+    Example:
+    ```python
+    >>> from org_parser.element import Paragraph
+    >>> paragraph = Paragraph.from_source("Paragraph text")
+    >>> paragraph.body_text
+    'Paragraph text'
+    ```
     """
 
     def __init__(
@@ -49,11 +50,11 @@ class Paragraph(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> Paragraph:
-        """Create a :class:`Paragraph` from a tree-sitter ``paragraph`` node.
+        """Create a [org_parser.element.Paragraph][] from a tree-sitter ``paragraph`` node.
 
         Args:
             node: The ``paragraph`` tree-sitter node.
-            document: The owning :class:`Document`, or *None* for programmatic
+            document: The owning [org_parser.document.Document][], or *None* for programmatic
                 construction (source defaults to ``b""``).
             parent: Optional parent owner object.
         """

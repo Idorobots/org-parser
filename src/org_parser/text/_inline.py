@@ -7,9 +7,6 @@ titles and paragraph text.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
-
-from org_parser.time import Timestamp
 
 __all__ = [
     "AngleLink",
@@ -34,32 +31,19 @@ __all__ = [
     "Subscript",
     "Superscript",
     "Target",
-    "Timestamp",
     "Underline",
     "Verbatim",
 ]
 
 
-class InlineObject(Protocol):
-    """Protocol for objects that can render themselves to Org syntax."""
+class InlineObject:
+    """Base class for inline markup objects."""
+
+    __slots__ = ()
 
     def __str__(self) -> str:
         """Render this inline object to Org text."""
-        ...
-
-    def reformat(self) -> None:
-        """Mark this inline object dirty for scratch-built rendering."""
-        ...
-
-
-class _InlineBase:
-    """Concrete base supplying a no-op :meth:`reformat` for frozen inline types.
-
-    All frozen dataclass inline types inherit from this class.  :class:`Timestamp`
-    overrides :meth:`reformat` with a real implementation.
-    """
-
-    __slots__ = ()
+        return ""
 
     def reformat(self) -> None:
         """No-op reformat for immutable inline objects."""
@@ -71,7 +55,7 @@ def _render_parts(parts: list[InlineObject]) -> str:
 
 
 @dataclass(frozen=True, slots=True)
-class PlainText(_InlineBase):
+class PlainText(InlineObject):
     """Plain text object."""
 
     text: str
@@ -82,7 +66,7 @@ class PlainText(_InlineBase):
 
 
 @dataclass(frozen=True, slots=True)
-class LineBreak(_InlineBase):
+class LineBreak(InlineObject):
     """Hard line break object."""
 
     trailing: str = ""
@@ -93,7 +77,7 @@ class LineBreak(_InlineBase):
 
 
 @dataclass(frozen=True, slots=True)
-class InlineEntity(_InlineBase):
+class InlineEntity(InlineObject):
     r"""Org entity inline object.
 
     Represents named entities (e.g. ``\alpha``, ``\\Rightarrow``) and the
@@ -107,7 +91,7 @@ class InlineEntity(_InlineBase):
     The ``\\_ `` form is represented with ``name="_"``.  Its ``__str__``
     always emits a single trailing space; round-trip fidelity for multiple
     trailing spaces relies on the parse-tree-backed source slice in
-    :class:`~org_parser.text.RichText`.
+    [org_parser.text.RichText][].
 
     Args:
         name: Entity name (e.g. ``"alpha"``) or ``"_"`` for the ``\\_ `` form.
@@ -129,13 +113,14 @@ class InlineEntity(_InlineBase):
 class CompletionCounter(_InlineBase):
     """Completion counter object, e.g. ``[1/3]`` or ``[50%]``.
 
-    Example::
-
-        >>> from org_parser.text import CompletionCounter
-        >>> document = loads("* Heading")
-        >>> document[0].counter = CompletionCounter("1/3")
-        >>> print(str(document))
-        * [1/3] Heading
+    Example:
+    ```python
+    >>> from org_parser.text import CompletionCounter
+    >>> document = loads("* Heading")
+    >>> document[0].counter = CompletionCounter("1/3")
+    >>> print(str(document))
+    * [1/3] Heading
+    ```
     """
 
     value: str

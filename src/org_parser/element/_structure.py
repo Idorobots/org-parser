@@ -3,10 +3,10 @@
 This module covers elements that govern the physical structure of a section
 body but carry no textual content of their own:
 
-* :class:`BlankLine` — an empty separator line (``blank_line`` node).
-* :class:`Comment` — a single-line ``#`` comment.
-* :class:`HorizontalRule` — a ``-----`` horizontal rule line.
-* :class:`Indent` — a contiguous indented chunk (``indent`` node).
+* [org_parser.element.BlankLine][] — an empty separator line (``blank_line`` node).
+* [org_parser.element.Comment][] — a single-line ``#`` comment.
+* [org_parser.element.HorizontalRule][] — a ``-----`` horizontal rule line.
+* [org_parser.element.Indent][] — a contiguous indented chunk (``indent`` node).
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ class BlankLine(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> BlankLine:
-        """Create a :class:`BlankLine` from a ``blank_line`` node."""
+        """Create a [org_parser.element.BlankLine][] from a ``blank_line`` node."""
         elem = cls(parent=parent)
         elem.attach_source(node, document)
         return elem
@@ -74,12 +74,13 @@ class Comment(Element):
         text: The comment body text, excluding the leading ``#`` marker and
             optional following space.
 
-    Example::
-
-        >>> from org_parser import loads
-        >>> document = loads("# comment")
-        >>> document.body[0].text
-        'comment'
+    Example:
+    ```python
+    >>> from org_parser import loads
+    >>> document = loads("# comment")
+    >>> document.body[0].text
+    'comment'
+    ```
     """
 
     def __init__(
@@ -99,7 +100,7 @@ class Comment(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> Comment:
-        """Create a :class:`Comment` from a ``comment`` node."""
+        """Create a [org_parser.element.Comment][] from a ``comment`` node."""
         raw = node_source(node, document).rstrip("\n")
         if raw.startswith("# "):
             text = raw[2:]
@@ -159,7 +160,7 @@ class HorizontalRule(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> HorizontalRule:
-        """Create a :class:`HorizontalRule` from a ``horizontal_rule`` node."""
+        """Create a [org_parser.element.HorizontalRule][] from a ``horizontal_rule`` node."""
         raw = node_source(node, document).rstrip("\n")
         elem = cls(rule=raw, parent=parent)
         elem.attach_source(node, document)
@@ -214,7 +215,7 @@ class Indent(Element):
         parent: Document | Heading | Element | None = None,
         child_factory: Callable[..., Element],
     ) -> Indent:
-        """Build one :class:`Indent` from a tree-sitter ``indent`` node.
+        """Build one [org_parser.element.Indent][] from a tree-sitter ``indent`` node.
 
         The *child_factory* callable is responsible for dispatching each named
         ``body`` field child to the appropriate element constructor for the
@@ -224,14 +225,14 @@ class Indent(Element):
         Args:
             node: A tree-sitter ``indent`` node.
             document: The owning
-                :class:`~org_parser.document._document.Document`.
+                [org_parser.document.Document][].
             parent: Optional parent element to assign to the returned block.
             child_factory: Callable with signature
                 ``(child_node, document, *, parent) -> Element`` used to build
                 each named body child.
 
         Returns:
-            An :class:`Indent` whose body elements are built by
+            An [org_parser.element.Indent][] whose body elements are built by
             *child_factory* and whose source span is attached for clean
             round-trip rendering.
         """

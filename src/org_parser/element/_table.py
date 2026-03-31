@@ -1,7 +1,8 @@
 """Implementation of table semantic abstractions.
 
-This module provides :class:`Table` for Org tables, :class:`TableEl` for
-Table.el grids, and dedicated row/cell abstractions for Org table rows.
+This module provides [org_parser.elements.Table][] for Org tables,
+[org_parser.element.TableEl][] for Table.el grids, and dedicated row/cell
+abstractions for Org table rows.
 """
 
 from __future__ import annotations
@@ -38,15 +39,16 @@ class TableCell:
         value: Cell value rich text.
         table: Owning table.
 
-    Example::
-
-        >>> from org_parser import loads
-        >>> document = loads('''
-        ... | 1 | 2 |
-        ... | 3 | 4 |
-        ... ''')
-        >>> document.body[0].rows[1].cells[1]
-        '4'
+    Example:
+    ```python
+    >>> from org_parser import loads
+    >>> document = loads('''
+    ... | 1 | 2 |
+    ... | 3 | 4 |
+    ... ''')
+    >>> document.body[0].rows[1].cells[1]
+    '4'
+    ```
     """
 
     def __init__(self, *, value: RichText, table: Table) -> None:
@@ -87,15 +89,16 @@ class TableRow:
         cells: Row cells.
         table: Owning table.
 
-    Example::
-
-        >>> from org_parser import loads
-        >>> document = loads('''
-        ... | 1 | 2 |
-        ... | 3 | 4 |
-        ... ''')
-        >>> len(document.body[0].rows[1])
-        2
+    Example:
+    ```python
+    >>> from org_parser import loads
+    >>> document = loads('''
+    ... | 1 | 2 |
+    ... | 3 | 4 |
+    ... ''')
+    >>> len(document.body[0].rows[1])
+    2
+    ```
     """
 
     def __init__(self, *, cells: list[TableCell], table: Table) -> None:
@@ -158,13 +161,14 @@ class TableRuleRow:
         raw: Raw source text of the rule row (e.g. ``|---+---|``).
         table: Owning table.
 
-    Example::
-
-        >>> from org_parser.element import Table, TableRuleRow
-        >>> table = Table(rows=[])
-        >>> obj = TableRuleRow(raw="|---|")
-        >>> type(obj).__name__
-        'TableRuleRow'
+    Example:
+    ```python
+    >>> from org_parser.element import Table, TableRuleRow
+    >>> table = Table(rows=[])
+    >>> obj = TableRuleRow(raw="|---|")
+    >>> type(obj).__name__
+    'TableRuleRow'
+    ```
     """
 
     def __init__(self, *, raw: str, table: Table) -> None:
@@ -193,17 +197,18 @@ class Table(Element):
         formulas: Table formulas without ``#+TBLFM:`` prefix.
         parent: Optional parent owner object.
 
-    Example::
-
-        >>> from org_parser import loads
-        >>> document = loads('''
-        ... | 1 | 2 |
-        ... | 3 | 4 |
-        ... ''')
-        >>> document.body[0][1][1] = 5
-        >>> print(str(document))
-        | 1 | 2 |
-        | 3 | 5 |
+    Example:
+    ```python
+    >>> from org_parser import loads
+    >>> document = loads('''
+    ... | 1 | 2 |
+    ... | 3 | 4 |
+    ... ''')
+    >>> document.body[0][1][1] = 5
+    >>> print(str(document))
+    | 1 | 2 |
+    | 3 | 5 |
+    ```
     """
 
     def __init__(
@@ -226,7 +231,7 @@ class Table(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> Table:
-        """Create a :class:`Table` from an ``org_table`` node."""
+        """Create a [org_parser.element.Table][] from an ``org_table`` node."""
         if node.type != ORG_TABLE:
             msg = f"Expected {ORG_TABLE!r} node, got {node.type!r}"
             raise ValueError(msg)
@@ -266,16 +271,17 @@ class Table(Element):
     def formulas(self) -> list[str]:
         """Mutable table formulas without ``#+TBLFM:`` prefix.
 
-        Example::
-
-            >>> from org_parser import loads
-            >>> document = loads('''
-            ... | 1 | 2 |
-            ... | 3 | 4 |
-            ... #+TBLFM: @1$1=5
-            ... ''')
-            >>> document.body[0].formulas
-            ['@1$1=5']
+        Example:
+        ```python
+        >>> from org_parser import loads
+        >>> document = loads('''
+        ... | 1 | 2 |
+        ... | 3 | 4 |
+        ... #+TBLFM: @1$1=5
+        ... ''')
+        >>> document.body[0].formulas
+        ['@1$1=5']
+        ```
         """
         return self._formulas
 
@@ -341,7 +347,7 @@ class TableEl(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> TableEl:
-        """Create a :class:`TableEl` from a ``tableel_table`` node."""
+        """Create a [org_parser.element.TableEl][] from a ``tableel_table`` node."""
         if node.type != TABLEEL_TABLE:
             msg = f"Expected {TABLEEL_TABLE!r} node, got {node.type!r}"
             raise ValueError(msg)
@@ -365,7 +371,7 @@ def _parse_org_table_row(
     table: Table,
     document: Document,
 ) -> TableRow | TableRuleRow:
-    """Parse one ``table_row`` node into :class:`TableRow` or :class:`TableRuleRow`."""
+    """Parse one ``table_row`` node into a regular or rule row."""
     has_rule = any(child.type == TABLE_RULE for child in node.named_children)
     if has_rule:
         raw_source = document.source_for(node).decode()
@@ -394,7 +400,7 @@ def _extract_tblfm_formula(
 
 
 def _coerce_rich_text(value: RichText | str) -> RichText:
-    """Return *value* as :class:`RichText`."""
+    """Return *value* as [org_parser.text.RichText][]."""
     if isinstance(value, RichText):
         return value
     return RichText(value)

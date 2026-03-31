@@ -1,9 +1,9 @@
 """Base class for Org Mode structural element nodes.
 
-An :class:`Element` wraps a tree-sitter node that represents an Org Mode
+An [org_parser.element.Element][] wraps a tree-sitter node that represents an Org Mode
 *greater element* or *lesser element* (paragraph, plain list, source block,
 drawer, etc.).  Concrete subclasses add per-element semantic fields;
-:class:`Element` itself should not be instantiated directly.
+[org_parser.element.Element][] itself should not be instantiated directly.
 """
 
 from __future__ import annotations
@@ -281,15 +281,16 @@ class Element:
         The keywords remain as independent elements in the containing body
         list and are not duplicated in the serialised output of this element.
 
-        Example::
-
-            >>> from org_parser.element import CaptionKeyword
-            >>> document = loads('''
-            ... #+CAPTION: Some Table
-            ... |table|
-            ... ''')
-            >>> document.body[0].keywords[0].value
-            'Some Table'
+        Example:
+        ```python
+        >>> from org_parser.element import CaptionKeyword
+        >>> document = loads('''
+        ... #+CAPTION: Some Table
+        ... |table|
+        ... ''')
+        >>> document.body[0].keywords[0].value
+        'Some Table'
+        ```
         """
         return self._keywords if self._keywords is not None else []
 
@@ -299,25 +300,26 @@ class Element:
         This method is called during body post-processing to link affiliated
         keywords (``#+CAPTION:``, ``#+TBLNAME:``, ``#+PLOT:``,
         ``#+RESULTS:``) to the element that immediately follows them.  The
-        keyword is appended to :attr:`keywords` in document order.
+        keyword is appended to [org_parser.element.Element.keywords][] in document order.
 
         Args:
             keyword: The affiliated keyword to attach.
 
-        Example::
+        Example:
+        ```python
+        >>> from org_parser.element import CaptionKeyword
+        >>> document = loads("|table|")
+        >>> c = CaptionKeyword.from_source("#+CAPTION: Some table")
+        >>> document.body[0].attach_keyword(c)
+        >>> len(document.body[0].keywords)
+        1
+        >>> print(str(document))
 
-            >>> from org_parser.element import CaptionKeyword
-            >>> document = loads("|table|")
-            >>> c = CaptionKeyword.from_source("#+CAPTION: Some table")
-            >>> document.body[0].attach_keyword(c)
-            >>> len(document.body[0].keywords)
-            1
-            >>> print(str(document))
-
-            >>> document.body = [c, document.body[0]]
-            >>> print(str(document))
-            #+CAPTION: Some table
-            |table|
+        >>> document.body = [c, document.body[0]]
+        >>> print(str(document))
+        #+CAPTION: Some table
+        |table|
+        ```
         """
         if self._keywords is None:
             self._keywords = []
@@ -345,7 +347,7 @@ class Element:
 
         Args:
             node: The tree-sitter node this element was built from.
-            document: The owning :class:`Document`, or *None*.
+            document: The owning [org_parser.document.Document][], or *None*.
         """
         self._node = node
         self._document = document
@@ -376,20 +378,20 @@ def element_from_error_or_unknown(
 
     All unrecognised nodes — whether a parser ``ERROR``, a missing token, or
     an unknown but syntactically valid node type — are recovered as a
-    :class:`~org_parser.element._paragraph.Paragraph` whose ``body`` is a
-    :class:`~org_parser.text._rich_text.RichText` of the verbatim source
-    text.  The owning :class:`~org_parser.document._document.Document`'s
-    :meth:`~org_parser.document._document.Document.report_error` method is
+    [org_parser.element.Paragraph][] whose ``body`` is a
+    [org_parser.text.RichText][] of the verbatim source
+    text.  The owning [org_parser.document.Document][]'s
+    [org_parser.document.Document.report_error][] method is
     invoked so the document can record the error.
 
     Args:
         node: The unrecognised tree-sitter node.
-        document: The owning :class:`Document`, or *None* for programmatic
+        document: The owning [org_parser.document.Document][], or *None* for programmatic
             construction (source defaults to ``b""``).
         parent: Optional owner object.
 
     Returns:
-        A :class:`~org_parser.element._paragraph.Paragraph` wrapping the
+        A [org_parser.element.Paragraph][] wrapping the
         verbatim source text of *node*.
     """
     if document is not None:

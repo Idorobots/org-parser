@@ -1,4 +1,4 @@
-"""Implementation of :class:`Timestamp` for Org timestamps.
+"""Implementation of [org_parser.time.Timestamp][] for Org timestamps.
 
 The timestamp abstraction stores parsed date/time components and exposes
 datetime-based convenience accessors.
@@ -34,12 +34,12 @@ class Timestamp:
     """Parsed Org timestamp with component-level fields.
 
     All fields are mutable.  Mutating any field marks the instance dirty;
-    a dirty :class:`Timestamp` rebuilds its string representation from the
+    a dirty [org_parser.time.Timestamp][] rebuilds its string representation from the
     component fields rather than returning the original ``raw`` source text.
 
     Args:
         raw: Original timestamp text from source.  Used verbatim by
-            :meth:`__str__` until the instance is marked dirty.
+            [org_parser.time.Timestamp.__str__][] until the instance is marked dirty.
         is_active: Whether the timestamp uses active delimiters (``<...>``).
         start_year: Start year.
         start_month: Start month (1-12).
@@ -54,12 +54,13 @@ class Timestamp:
         end_hour: Optional end hour.
         end_minute: Optional end minute.
 
-    Example::
-
-        >>> from org_parser.time import Timestamp
-        >>> timestamp = Timestamp.from_source("<2026-03-29 Sun 10:00>")
-        >>> timestamp.start.year
-        2026
+    Example:
+    ```python
+    >>> from org_parser.time import Timestamp
+    >>> timestamp = Timestamp.from_source("<2026-03-29 Sun 10:00>")
+    >>> timestamp.start.year
+    2026
+    ```
     """
 
     raw: str
@@ -80,7 +81,7 @@ class Timestamp:
 
     @classmethod
     def from_source(cls, source: str) -> Timestamp:
-        """Parse *source* and return one strict :class:`Timestamp`.
+        """Parse *source* and return one strict [org_parser.time.Timestamp][].
 
         The source must parse to a single inline timestamp object with no
         surrounding text.
@@ -89,7 +90,7 @@ class Timestamp:
             source: Org source text containing exactly one timestamp.
 
         Returns:
-            Parsed :class:`Timestamp`.
+            Parsed [org_parser.time.Timestamp][].
 
         Raises:
             ValueError: If parsing fails or the structure is not one timestamp.
@@ -112,7 +113,7 @@ class Timestamp:
 
     @classmethod
     def from_node(cls, node: tree_sitter.Node, document: Document) -> Timestamp:
-        """Create a :class:`Timestamp` from a tree-sitter timestamp-like node."""
+        """Create a [org_parser.time.Timestamp][] from a tree-sitter timestamp-like node."""
         report_internal_parse_errors(node, document)
         raw = _extract_raw_timestamp_text(node, document)
         is_active = raw.startswith("<")
@@ -182,14 +183,15 @@ class Timestamp:
 
     @property
     def start(self) -> datetime:
-        """Return the start value as :class:`datetime`.
+        """Return the start value as [datetime.datetime][].
 
-        Example::
-
-            >>> from org_parser.time import Timestamp
-            >>> timestamp = Timestamp.from_source("<2026-03-29 Sun 10:00>")
-            >>> timestamp.start.year
-            2026
+        Example:
+        ```python
+        >>> from org_parser.time import Timestamp
+        >>> timestamp = Timestamp.from_source("<2026-03-29 Sun 10:00>")
+        >>> timestamp.start.year
+        2026
+        ```
         """
         hour = self.start_hour if self.start_hour is not None else 0
         minute = self.start_minute if self.start_minute is not None else 0
@@ -197,14 +199,15 @@ class Timestamp:
 
     @property
     def end(self) -> datetime | None:
-        """Return the end value as :class:`datetime`, if available.
+        """Return the end value as [datetime.datetime][], if available.
 
-        Example::
-
-            >>> from org_parser.time import Timestamp
-            >>> timestamp = Timestamp.from_source("<2026-03-29 Sun 10:00-20:00>")
-            >>> timestamp.end is not None
-            True
+        Example:
+        ```python
+        >>> from org_parser.time import Timestamp
+        >>> timestamp = Timestamp.from_source("<2026-03-29 Sun 10:00-20:00>")
+        >>> timestamp.end is not None
+        True
+        ```
         """
         if self.end_year is None or self.end_month is None or self.end_day is None:
             return None
@@ -213,14 +216,15 @@ class Timestamp:
         return datetime(self.end_year, self.end_month, self.end_day, hour, minute)
 
     def to_datetime(self) -> datetime:
-        """Return this timestamp as :class:`datetime` using ``start``.
+        """Return this timestamp as [datetime.datetime][] using ``start``.
 
-        Example::
-
-            >>> from org_parser.time import Timestamp
-            >>> timestamp = Timestamp.from_source("<2026-03-29 Sun 10:00>")
-            >>> timestamp.to_datetime()
-            datetime.datetime(2026, 3, 29, 10, 0)
+        Example:
+        ```python
+        >>> from org_parser.time import Timestamp
+        >>> timestamp = Timestamp.from_source("<2026-03-29 Sun 10:00>")
+        >>> timestamp.to_datetime()
+        datetime.datetime(2026, 3, 29, 10, 0)
+        ```
         """
         return self.start
 

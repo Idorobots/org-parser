@@ -37,18 +37,19 @@ _REPEAT_HEADER_PREFIX_PATTERN = re.compile(
 class ListItem(Element):
     r"""One mutable plain-list item with all item-level metadata.
 
-    Example::
-
-        >>> from org_parser.element import ListItem
-        >>> from org_parser.text import RichText
-        >>> from org_parser import loads
-        >>> document = loads("- Item 0\n")
-        >>> document.body[0].items.append(ListItem(bullet="-", first_line=RichText("Item 1")))
-        >>> document.body[0][0].checkbox = "X"
-        >>> document.body[0][1].bullet = '+'
-        >>> print(str(document))
-        - [X] Item 0
-        + Item 1
+    Example:
+    ```python
+    >>> from org_parser.element import ListItem
+    >>> from org_parser.text import RichText
+    >>> from org_parser import loads
+    >>> document = loads("- Item 0\n")
+    >>> document.body[0].items.append(ListItem(bullet="-", first_line=RichText("Item 1")))
+    >>> document.body[0][0].checkbox = "X"
+    >>> document.body[0][1].bullet = '+'
+    >>> print(str(document))
+    - [X] Item 0
+    + Item 1
+    ```
     """
 
     def __init__(
@@ -86,7 +87,7 @@ class ListItem(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> ListItem:
-        """Create one :class:`ListItem` from a ``list_item`` parse node."""
+        """Create one [org_parser.element.ListItem][] from a ``list_item`` parse node."""
         item = cls(
             bullet=_extract_bullet(node, document),
             ordered_counter=_extract_optional_field_text(node, document, "counter"),
@@ -271,19 +272,20 @@ class ListItem(Element):
 class Repeat(ListItem):
     """Repeated-task logbook entry represented as a specialized list item.
 
-    Example::
-
-        >>> from org_parser import loads
-        >>> from org_parser.element import Repeat
-        >>> from org_parser.time import Timestamp
-        >>> heading = loads("* TODO Heading 1").children[0]
-        >>> ts = Timestamp.from_source("<2025-10-10>")
-        >>> heading.add_repeated_task(Repeat(after="DONE", before="TODO", timestamp=ts))
-        >>> print(str(heading))
-        * TODO Heading 1
-        :LOGBOOK:
-        - State "DONE"       from "TODO"       <2025-10-10>
-        :END:
+    Example:
+    ```python
+    >>> from org_parser import loads
+    >>> from org_parser.element import Repeat
+    >>> from org_parser.time import Timestamp
+    >>> heading = loads("* TODO Heading 1").children[0]
+    >>> ts = Timestamp.from_source("<2025-10-10>")
+    >>> heading.add_repeated_task(Repeat(after="DONE", before="TODO", timestamp=ts))
+    >>> print(str(heading))
+    * TODO Heading 1
+    :LOGBOOK:
+    - State "DONE"       from "TODO"       <2025-10-10>
+    :END:
+    ```
     """
 
     state_alignment_space = 12
@@ -319,7 +321,7 @@ class Repeat(ListItem):
 
     @classmethod
     def from_list_item(cls, item: ListItem, document: Document) -> Repeat | None:
-        """Build a :class:`Repeat` from one list item when pattern-matched."""
+        """Build a [org_parser.element.Repeat][] from one list item when pattern-matched."""
         if (
             item.item_tag is not None
             or item.counter_set is not None
@@ -448,21 +450,22 @@ class Repeat(ListItem):
 
 
 class List(Element):
-    r"""Plain list element containing mutable :class:`ListItem` instances.
+    r"""Plain list element containing mutable [org_parser.element.ListItem][] instances.
 
-    Example::
-
-        >>> from org_parser.element import ListItem
-        >>> from org_parser import loads
-        >>> document = loads('''
-        ... - Item 0
-        ... - Item 1
-        ... ''')
-        >>> document.body[0][0].checkbox = "X"
-        >>> document.body[0][1].bullet = '+'
-        >>> print(str(document))
-        - [X] Item 0
-        + Item 1
+    Example:
+    ```python
+    >>> from org_parser.element import ListItem
+    >>> from org_parser import loads
+    >>> document = loads('''
+    ... - Item 0
+    ... - Item 1
+    ... ''')
+    >>> document.body[0][0].checkbox = "X"
+    >>> document.body[0][1].bullet = '+'
+    >>> print(str(document))
+    - [X] Item 0
+    + Item 1
+    ```
     """
 
     def __init__(
@@ -483,7 +486,7 @@ class List(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> List:
-        """Create a :class:`List` from a ``list`` node."""
+        """Create a [org_parser.element.List][] from a ``list`` node."""
         items = [
             ListItem.from_node(child, document, parent=None)
             for child in node.named_children
@@ -729,5 +732,5 @@ def _extract_indent(
     *,
     parent: Document | Heading | Element | None = None,
 ) -> Indent:
-    """Build one :class:`Indent` for a list-item body ``indent`` node."""
+    """Build one [org_parser.element.Indent][] for a list-item body ``indent`` node."""
     return Indent.from_node(node, document, parent=parent, child_factory=_extract_list_body_element)

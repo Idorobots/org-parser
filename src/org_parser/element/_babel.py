@@ -1,6 +1,6 @@
 """Babel call element class for Org ``#+call:`` lines.
 
-This module provides :class:`BabelCall`, the Python wrapper for the
+This module provides [org_parser.element.BabelCall][], the Python wrapper for the
 ``babel_call`` tree-sitter node produced by the Org grammar.  A babel call
 line invokes a named source block by name, optionally supplying a header
 argument list and an argument expression:
@@ -43,14 +43,15 @@ class BabelCall(Element):
         outside_header: Optional header string inside the second ``[…]``.
         parent: Optional parent owner object.
 
-    Example::
-
-        >>> from org_parser.element import BabelCall
-        >>> c = BabelCall.from_source("#+call: foo(bar)")
-        >>> c.name
-        'foo'
-        >>> c.arguments
-        'bar'
+    Example:
+    ```python
+    >>> from org_parser.element import BabelCall
+    >>> c = BabelCall.from_source("#+call: foo(bar)")
+    >>> c.name
+    'foo'
+    >>> c.arguments
+    'bar'
+    ```
     """
 
     def __init__(
@@ -76,11 +77,11 @@ class BabelCall(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> BabelCall:
-        """Create a :class:`BabelCall` from a ``babel_call`` tree-sitter node.
+        """Create a [org_parser.element.BabelCall][] from a ``babel_call`` tree-sitter node.
 
         Args:
             node: The ``babel_call`` tree-sitter node.
-            document: The owning :class:`Document`.
+            document: The owning [org_parser.document.Document][].
             parent: Optional parent owner object.
         """
         name_node = node.child_by_field_name("name")

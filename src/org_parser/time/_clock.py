@@ -1,4 +1,4 @@
-"""Implementation of :class:`Clock` for Org ``CLOCK:`` log lines."""
+"""Implementation of [org_parser.time.Clock][] for Org ``CLOCK:`` log lines."""
 
 from __future__ import annotations
 
@@ -25,14 +25,15 @@ class Clock(Element):
         duration: Optional ``H:MM`` duration value.
         parent: Optional parent owner object.
 
-    Example::
-
-        >>> from org_parser.time import Clock, Timestamp
-        >>> clock = Clock(timestamp=Timestamp.from_source("<2026-03-29 Sun 10:00-11:00>"))
-        >>> clock.duration
-        '1:00'
-        >>> clock.timestamp.start.year
-        2026
+    Example:
+    ```python
+    >>> from org_parser.time import Clock, Timestamp
+    >>> clock = Clock(timestamp=Timestamp.from_source("<2026-03-29 Sun 10:00-11:00>"))
+    >>> clock.duration
+    '1:00'
+    >>> clock.timestamp.start.year
+    2026
+    ```
     """
 
     def __init__(
@@ -54,7 +55,7 @@ class Clock(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> Clock:
-        """Create a :class:`Clock` from a tree-sitter ``clock`` node."""
+        """Create a [org_parser.time.Clock][] from a tree-sitter ``clock`` node."""
         clock = cls(
             timestamp=_extract_clock_timestamp(node, document),
             duration=_extract_clock_duration(node, document),
@@ -68,12 +69,13 @@ class Clock(Element):
     def timestamp(self) -> Timestamp | None:
         """Clock timestamp value, when present.
 
-        Example::
-
-            >>> from org_parser.time import Clock, Timestamp
-            >>> clock = Clock(timestamp=Timestamp.from_source("[2026-03-29 Sun 10:00-11:00]"))
-            >>> clock.timestamp.start.year
-            2026
+        Example:
+        ```python
+        >>> from org_parser.time import Clock, Timestamp
+        >>> clock = Clock(timestamp=Timestamp.from_source("[2026-03-29 Sun 10:00-11:00]"))
+        >>> clock.timestamp.start.year
+        2026
+        ```
         """
         return self._timestamp
 
@@ -91,12 +93,13 @@ class Clock(Element):
     def duration(self) -> str | None:
         """Clock duration text in ``H:MM`` format, when present.
 
-        Example::
-
-            >>> from org_parser.time import Clock, Timestamp
-            >>> clock = Clock(timestamp=Timestamp.from_source("[2026-03-29 Sun 10:00-11:00]"))
-            >>> clock.duration
-            '1:00'
+        Example:
+        ```python
+        >>> from org_parser.time import Clock, Timestamp
+        >>> clock = Clock(timestamp=Timestamp.from_source("[2026-03-29 Sun 10:00-11:00]"))
+        >>> clock.duration
+        '1:00'
+        ```
         """
         return self._duration
 

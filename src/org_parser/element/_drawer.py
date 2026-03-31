@@ -39,18 +39,19 @@ class Drawer(Element):
         body: Parsed child elements contained in the drawer.
         parent: Optional parent owner object.
 
-    Example::
-
-        >>> from org_parser.element import Drawer
-        >>> d = Drawer.from_source('''\
-        ... :DRAWER:
-        ... some content
-        ... :END:
-        ... ''')
-        >>> d.name
-        'DRAWER'
-        >>> d.body_text
-        'some content\n'
+    Example:
+    ```python
+    >>> from org_parser.element import Drawer
+    >>> d = Drawer.from_source('''\
+    ... :DRAWER:
+    ... some content
+    ... :END:
+    ... ''')
+    >>> d.name
+    'DRAWER'
+    >>> d.body_text
+    'some content\n'
+    ```
     """
 
     def __init__(
@@ -73,7 +74,7 @@ class Drawer(Element):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> Drawer:
-        """Create a :class:`Drawer` from a tree-sitter ``drawer`` node."""
+        """Create a [org_parser.element.Drawer][] from a tree-sitter ``drawer`` node."""
         name_node = node.child_by_field_name("name")
         name = "" if name_node is None else document.source_for(name_node).decode()
         drawer_body = [
@@ -157,21 +158,22 @@ class Drawer(Element):
 class Logbook(Drawer):
     """Specialized drawer for ``:LOGBOOK:`` entries.
 
-    Example::
-
-        >>> from org_parser.element import Logbook
-        >>> d = Logbook.from_source('''\
-        ... :LOGBOOK:
-        ... CLOCK: [2025-10-10]
-        ... - State "DONE"       from "TODO"       <2025-10-10>
-        ... :END:
-        ... ''')
-        >>> d.name
-        'LOGBOOK'
-        >>> len(d.clock_entries)
-        1
-        >>> len(d.repeats)
-        1
+    Example:
+    ```python
+    >>> from org_parser.element import Logbook
+    >>> d = Logbook.from_source('''\
+    ... :LOGBOOK:
+    ... CLOCK: [2025-10-10]
+    ... - State "DONE"       from "TODO"       <2025-10-10>
+    ... :END:
+    ... ''')
+    >>> d.name
+    'LOGBOOK'
+    >>> len(d.clock_entries)
+    1
+    >>> len(d.repeats)
+    1
+    ```
     """
 
     def __init__(
@@ -215,7 +217,7 @@ class Logbook(Drawer):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> Logbook:
-        """Create a :class:`Logbook` from ``logbook_drawer`` node."""
+        """Create a [org_parser.element.Logbook][] from ``logbook_drawer`` node."""
         body = [
             _extract_drawer_body_element(child, document)
             for child in node.children_by_field_name("body")
@@ -317,18 +319,19 @@ class Logbook(Drawer):
 class Properties(Element, MutableMapping[str, RichText]):
     """Property drawer element with dictionary-like mutable access.
 
-    Example::
-
-        >>> from org_parser.element import Properties
-        >>> d = Properties.from_source('''\
-        ... :PROPERTIES:
-        ... :key: Value
-        ... :END:
-        ... ''')
-        >>> d.name
-        'PROPERTIES'
-        >>> d["key"]
-        'Value
+    Example:
+    ```python
+    >>> from org_parser.element import Properties
+    >>> d = Properties.from_source('''\
+    ... :PROPERTIES:
+    ... :key: Value
+    ... :END:
+    ... ''')
+    >>> d.name
+    'PROPERTIES'
+    >>> d["key"]
+    'Value
+    ```
     """
 
     def __init__(
@@ -351,7 +354,7 @@ class Properties(Element, MutableMapping[str, RichText]):
         *,
         parent: Document | Heading | Element | None = None,
     ) -> Properties:
-        """Create a :class:`Properties` from ``property_drawer`` node."""
+        """Create a [org_parser.element.Properties][] from ``property_drawer`` node."""
         properties = cls(parent=parent)
         for child in node.named_children:
             if child.type != NODE_PROPERTY:
@@ -451,7 +454,7 @@ def _extract_drawer_body_element(
 
 
 def _coerce_rich_text(value: RichText | str) -> RichText:
-    """Return *value* as :class:`RichText`."""
+    """Return *value* as [org_parser.text.RichText][]."""
     if isinstance(value, RichText):
         return value
     return RichText(value)
@@ -463,14 +466,14 @@ def _extract_indent(
     *,
     parent: Document | Heading | Element | None = None,
 ) -> Indent:
-    """Build one :class:`Indent` for a drawer body ``indent`` node."""
+    """Build one [org_parser.element.Indent][] for a drawer body ``indent`` node."""
     return Indent.from_node(
         node, document, parent=parent, child_factory=_extract_drawer_body_element
     )
 
 
 def _extract_logbook_repeats(body: list[Element], document: Document) -> list[Repeat]:
-    """Convert repeat-form list items in logbook lists into :class:`Repeat`.
+    """Convert repeat-form list items in logbook lists into [org_parser.element.Repeat][].
 
     Each list item body is parsed directly from tree-sitter fields, so the
     repeat parser receives the full continuation payload as-is.
