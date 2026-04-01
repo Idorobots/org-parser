@@ -1178,16 +1178,20 @@ class TestHeadingConvenienceFields:
     def test_timestamp_aggregation_and_extrema(self) -> None:
         """Heading timestamp helpers include planning, repeat, and clock values."""
         doc = Document(filename="x.org", todo=RichText("TODO | DONE"))
-        scheduled = Timestamp("<2025-01-02 Thu>", True, 2025, 1, 2)
-        closed = Timestamp("[2025-01-09 Thu]", False, 2025, 1, 9)
-        deadline = Timestamp("<2025-01-07 Tue>", True, 2025, 1, 7)
-        repeat_timestamp = Timestamp("[2025-01-05 Sun]", False, 2025, 1, 5)
+        scheduled = Timestamp(is_active=True, start_year=2025, start_month=1, start_day=2)
+        closed = Timestamp(is_active=False, start_year=2025, start_month=1, start_day=9)
+        deadline = Timestamp(is_active=True, start_year=2025, start_month=1, start_day=7)
+        repeat_timestamp = Timestamp(
+            is_active=False,
+            start_year=2025,
+            start_month=1,
+            start_day=5,
+        )
         clock_timestamp = Timestamp(
-            "[2025-01-03 Fri 10:00]--[2025-01-03 Fri 11:00]",
-            False,
-            2025,
-            1,
-            3,
+            is_active=False,
+            start_year=2025,
+            start_month=1,
+            start_day=3,
             start_hour=10,
             start_minute=0,
             end_year=2025,
@@ -1233,11 +1237,10 @@ class TestHeadingConvenienceFields:
         """latest_timestamp compares by end datetime when a range has one."""
         doc = Document(filename="x.org")
         with_end = Timestamp(
-            "[2025-01-01 Wed 23:00]--[2025-01-10 Fri 01:00]",
-            False,
-            2025,
-            1,
-            1,
+            is_active=False,
+            start_year=2025,
+            start_month=1,
+            start_day=1,
             start_hour=23,
             start_minute=0,
             end_year=2025,
@@ -1246,7 +1249,12 @@ class TestHeadingConvenienceFields:
             end_hour=1,
             end_minute=0,
         )
-        later_start_only = Timestamp("<2025-01-09 Thu>", True, 2025, 1, 9)
+        later_start_only = Timestamp(
+            is_active=True,
+            start_year=2025,
+            start_month=1,
+            start_day=9,
+        )
         heading = Heading(
             level=1,
             document=doc,

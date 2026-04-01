@@ -138,7 +138,6 @@ def test_logbook_setters_keep_body_and_extracted_entries_identical() -> None:
         after="DONE",
         before="TODO",
         timestamp=Timestamp(
-            raw="[2026-03-08 Sun 17:59]",
             is_active=False,
             start_year=2026,
             start_month=3,

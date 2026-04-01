@@ -6,7 +6,6 @@ datetime-based convenience accessors.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -26,11 +25,15 @@ if TYPE_CHECKING:
     import tree_sitter
 
     from org_parser.document._document import Document
+    from org_parser.document._heading import Heading
+    from org_parser.element._list import Repeat
+    from org_parser.text._rich_text import RichText
+    from org_parser.time._clock import Clock
+
 
 __all__ = ["Timestamp"]
 
 
-@dataclass(slots=True)
 class Timestamp(InlineObject):
     """Parsed Org timestamp with component-level fields.
 
@@ -39,8 +42,6 @@ class Timestamp(InlineObject):
     component fields rather than returning the original ``raw`` source text.
 
     Args:
-        raw: Original timestamp text from source.  Used verbatim by
-            [org_parser.time.Timestamp.__str__][] until the instance is marked dirty.
         is_active: Whether the timestamp uses active delimiters (``<...>``).
         start_year: Start year.
         start_month: Start month (1-12).
@@ -64,21 +65,60 @@ class Timestamp(InlineObject):
     ```
     """
 
-    raw: str
-    is_active: bool
-    start_year: int
-    start_month: int
-    start_day: int
-    start_dayname: str | None = None
-    start_hour: int | None = None
-    start_minute: int | None = None
-    end_year: int | None = None
-    end_month: int | None = None
-    end_day: int | None = None
-    end_dayname: str | None = None
-    end_hour: int | None = None
-    end_minute: int | None = None
-    _dirty: bool = field(default=False, init=False, repr=False, compare=False)
+    __slots__ = (
+        "_dirty",
+        "_end_day",
+        "_end_dayname",
+        "_end_hour",
+        "_end_minute",
+        "_end_month",
+        "_end_year",
+        "_is_active",
+        "_parent",
+        "_raw",
+        "_start_day",
+        "_start_dayname",
+        "_start_hour",
+        "_start_minute",
+        "_start_month",
+        "_start_year",
+    )
+
+    def __init__(
+        self,
+        *,
+        is_active: bool,
+        start_year: int,
+        start_month: int,
+        start_day: int,
+        start_dayname: str | None = None,
+        start_hour: int | None = None,
+        start_minute: int | None = None,
+        end_year: int | None = None,
+        end_month: int | None = None,
+        end_day: int | None = None,
+        end_dayname: str | None = None,
+        end_hour: int | None = None,
+        end_minute: int | None = None,
+        parent: Heading | Clock | Repeat | RichText | None = None,
+    ) -> None:
+        """Initialize a mutable timestamp value."""
+        self._is_active = is_active
+        self._start_year = start_year
+        self._start_month = start_month
+        self._start_day = start_day
+        self._start_dayname = start_dayname
+        self._start_hour = start_hour
+        self._start_minute = start_minute
+        self._end_year = end_year
+        self._end_month = end_month
+        self._end_day = end_day
+        self._end_dayname = end_dayname
+        self._end_hour = end_hour
+        self._end_minute = end_minute
+        self._parent = parent
+        self._dirty = False
+        self._raw = _render_timestamp(self)
 
     @classmethod
     def from_source(cls, source: str) -> Timestamp:
@@ -165,8 +205,7 @@ class Timestamp(InlineObject):
                 document.source_for(time_nodes[1]).decode()
             )
 
-        return cls(
-            raw=raw,
+        parsed = cls(
             is_active=is_active,
             start_year=start_year,
             start_month=start_month,
@@ -181,6 +220,161 @@ class Timestamp(InlineObject):
             end_hour=end_hour,
             end_minute=end_minute,
         )
+        parsed._raw = raw
+        return parsed
+
+    @property
+    def parent(self) -> Heading | Clock | Repeat | RichText | None:
+        """Parent object that owns this timestamp, if any."""
+        return self._parent
+
+    @parent.setter
+    def parent(self, value: Heading | Clock | Repeat | RichText | None) -> None:
+        """Set parent owner without changing dirty state."""
+        self._parent = value
+
+    @property
+    def is_active(self) -> bool:
+        """Whether this timestamp uses active delimiters (``<...>``)."""
+        return self._is_active
+
+    @is_active.setter
+    def is_active(self, value: bool) -> None:
+        """Set delimiter activity and mark dirty."""
+        self._is_active = value
+        self.mark_dirty()
+
+    @property
+    def start_year(self) -> int:
+        """Start year value."""
+        return self._start_year
+
+    @start_year.setter
+    def start_year(self, value: int) -> None:
+        """Set start year and mark dirty."""
+        self._start_year = value
+        self.mark_dirty()
+
+    @property
+    def start_month(self) -> int:
+        """Start month value."""
+        return self._start_month
+
+    @start_month.setter
+    def start_month(self, value: int) -> None:
+        """Set start month and mark dirty."""
+        self._start_month = value
+        self.mark_dirty()
+
+    @property
+    def start_day(self) -> int:
+        """Start day value."""
+        return self._start_day
+
+    @start_day.setter
+    def start_day(self, value: int) -> None:
+        """Set start day and mark dirty."""
+        self._start_day = value
+        self.mark_dirty()
+
+    @property
+    def start_dayname(self) -> str | None:
+        """Optional start day-name token."""
+        return self._start_dayname
+
+    @start_dayname.setter
+    def start_dayname(self, value: str | None) -> None:
+        """Set start day-name token and mark dirty."""
+        self._start_dayname = value
+        self.mark_dirty()
+
+    @property
+    def start_hour(self) -> int | None:
+        """Optional start hour."""
+        return self._start_hour
+
+    @start_hour.setter
+    def start_hour(self, value: int | None) -> None:
+        """Set start hour and mark dirty."""
+        self._start_hour = value
+        self.mark_dirty()
+
+    @property
+    def start_minute(self) -> int | None:
+        """Optional start minute."""
+        return self._start_minute
+
+    @start_minute.setter
+    def start_minute(self, value: int | None) -> None:
+        """Set start minute and mark dirty."""
+        self._start_minute = value
+        self.mark_dirty()
+
+    @property
+    def end_year(self) -> int | None:
+        """Optional end year for ranges."""
+        return self._end_year
+
+    @end_year.setter
+    def end_year(self, value: int | None) -> None:
+        """Set end year and mark dirty."""
+        self._end_year = value
+        self.mark_dirty()
+
+    @property
+    def end_month(self) -> int | None:
+        """Optional end month for ranges."""
+        return self._end_month
+
+    @end_month.setter
+    def end_month(self, value: int | None) -> None:
+        """Set end month and mark dirty."""
+        self._end_month = value
+        self.mark_dirty()
+
+    @property
+    def end_day(self) -> int | None:
+        """Optional end day for ranges."""
+        return self._end_day
+
+    @end_day.setter
+    def end_day(self, value: int | None) -> None:
+        """Set end day and mark dirty."""
+        self._end_day = value
+        self.mark_dirty()
+
+    @property
+    def end_dayname(self) -> str | None:
+        """Optional end day-name token."""
+        return self._end_dayname
+
+    @end_dayname.setter
+    def end_dayname(self, value: str | None) -> None:
+        """Set end day-name token and mark dirty."""
+        self._end_dayname = value
+        self.mark_dirty()
+
+    @property
+    def end_hour(self) -> int | None:
+        """Optional end hour for ranges."""
+        return self._end_hour
+
+    @end_hour.setter
+    def end_hour(self, value: int | None) -> None:
+        """Set end hour and mark dirty."""
+        self._end_hour = value
+        self.mark_dirty()
+
+    @property
+    def end_minute(self) -> int | None:
+        """Optional end minute for ranges."""
+        return self._end_minute
+
+    @end_minute.setter
+    def end_minute(self, value: int | None) -> None:
+        """Set end minute and mark dirty."""
+        self._end_minute = value
+        self.mark_dirty()
 
     @property
     def start(self) -> datetime:
@@ -232,11 +426,12 @@ class Timestamp(InlineObject):
     def __str__(self) -> str:
         """Render the timestamp as an Org source string.
 
-        Returns the original ``raw`` text when clean.  Once dirty, rebuilds
+        Returns the original source text when clean. Once dirty, rebuilds
         the string from component fields.
         """
         if not self._dirty:
-            return self.raw
+            assert self._raw is not None
+            return self._raw
         return _render_timestamp(self)
 
     def __repr__(self) -> str:
@@ -258,14 +453,54 @@ class Timestamp(InlineObject):
             end_minute=self.end_minute,
         )
 
+    def __eq__(self, other: object) -> bool:
+        """Compare timestamps by semantic component fields only."""
+        if not isinstance(other, Timestamp):
+            return NotImplemented
+        return (
+            self.is_active,
+            self.start_year,
+            self.start_month,
+            self.start_day,
+            self.start_dayname,
+            self.start_hour,
+            self.start_minute,
+            self.end_year,
+            self.end_month,
+            self.end_day,
+            self.end_dayname,
+            self.end_hour,
+            self.end_minute,
+        ) == (
+            other.is_active,
+            other.start_year,
+            other.start_month,
+            other.start_day,
+            other.start_dayname,
+            other.start_hour,
+            other.start_minute,
+            other.end_year,
+            other.end_month,
+            other.end_day,
+            other.end_dayname,
+            other.end_hour,
+            other.end_minute,
+        )
+
     @property
     def dirty(self) -> bool:
         """Whether this timestamp has been mutated since creation."""
         return self._dirty
 
     def mark_dirty(self) -> None:
-        """Mark this timestamp as dirty."""
+        """Mark this timestamp dirty and bubble to parent chain."""
+        if self._dirty:
+            return
         self._dirty = True
+        parent = self._parent
+        if parent is None:
+            return
+        parent.mark_dirty()
 
     def reformat(self) -> None:
         """Mark this timestamp as dirty for scratch-built rendering."""

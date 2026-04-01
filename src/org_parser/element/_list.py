@@ -342,6 +342,7 @@ class Repeat(ListItem):
         self._after = after
         self._before = before
         self._timestamp = timestamp
+        self._timestamp.parent = self
 
     @classmethod
     def from_list_item(cls, item: ListItem, document: Document) -> Repeat | None:
@@ -416,6 +417,7 @@ class Repeat(ListItem):
     def timestamp(self, value: Timestamp) -> None:
         """Set repeat timestamp."""
         self._timestamp = value
+        self._timestamp.parent = self
         self.mark_dirty()
 
     def reformat(self) -> None:

@@ -40,6 +40,35 @@ def test_rich_text_mutation_bubbles_to_heading_and_document() -> None:
     assert document.dirty is True
 
 
+def test_timestamp_mutation_bubbles_to_heading_and_document() -> None:
+    """Mutating planning timestamp fields marks heading and document dirty."""
+    document = Document(filename="doc.org")
+    heading = Heading(
+        level=1,
+        document=document,
+        parent=document,
+        scheduled=Timestamp(
+            is_active=True,
+            start_year=2025,
+            start_month=3,
+            start_day=1,
+            start_dayname="Sat",
+        ),
+    )
+
+    assert heading.scheduled is not None
+    assert heading.scheduled.dirty is False
+    assert heading.dirty is False
+    assert document.dirty is False
+
+    heading.scheduled.start_day = 2
+
+    assert heading.scheduled.dirty is True
+    assert heading.dirty is True
+    assert document.dirty is True
+    assert "<2025-03-02 Sat>" in str(heading)
+
+
 def test_element_parent_setter_does_not_mark_dirty() -> None:
     """Element parent setter updates parent without affecting dirty state."""
     document = Document(filename="doc.org")
@@ -203,7 +232,6 @@ def test_heading_setters_mark_heading_and_document_dirty() -> None:
     heading.counter = CompletionCounter("1/2")
     heading.heading_tags = ["work", "next"]
     heading.scheduled = Timestamp(
-        raw="<2025-03-01 Sat>",
         is_active=True,
         start_year=2025,
         start_month=3,
@@ -211,7 +239,6 @@ def test_heading_setters_mark_heading_and_document_dirty() -> None:
         start_dayname="Sat",
     )
     heading.deadline = Timestamp(
-        raw="<2025-03-05 Wed>",
         is_active=True,
         start_year=2025,
         start_month=3,
@@ -219,7 +246,6 @@ def test_heading_setters_mark_heading_and_document_dirty() -> None:
         start_dayname="Wed",
     )
     heading.closed = Timestamp(
-        raw="[2025-03-02 Sun 09:00]",
         is_active=False,
         start_year=2025,
         start_month=3,

@@ -198,7 +198,6 @@ def test_programmatic_rich_text_construction_uses_public_objects() -> None:
             RadioTarget([PlainText("radio")]),
             PlainText(" "),
             Timestamp(
-                raw="<2025-01-01 Wed>",
                 is_active=True,
                 start_year=2025,
                 start_month=1,

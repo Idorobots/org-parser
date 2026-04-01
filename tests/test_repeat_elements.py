@@ -33,7 +33,6 @@ def test_repeat_constructor_accepts_raw_string_rich_text_fields() -> None:
         after="DONE",
         before="TODO",
         timestamp=Timestamp(
-            raw="[2026-03-08 Sun]",
             is_active=False,
             start_year=2026,
             start_month=3,
@@ -108,7 +107,6 @@ def test_repeats_setter_creates_logbook_when_missing() -> None:
             after="DONE",
             before="TODO",
             timestamp=Timestamp(
-                raw="[2026-03-08 Sun 17:59]",
                 is_active=False,
                 start_year=2026,
                 start_month=3,
@@ -136,7 +134,6 @@ def test_repeats_append_creates_logbook_when_missing() -> None:
             after="DONE",
             before="TODO",
             timestamp=Timestamp(
-                raw="[2026-03-08 Sun 17:59]",
                 is_active=False,
                 start_year=2026,
                 start_month=3,
@@ -176,7 +173,6 @@ def test_heading_clock_setter_creates_logbook_when_missing() -> None:
 
     clock = Clock(
         timestamp=Timestamp(
-            raw="[2025-01-08 Wed 09:00]--[2025-01-08 Wed 09:30]",
             is_active=False,
             start_year=2025,
             start_month=1,

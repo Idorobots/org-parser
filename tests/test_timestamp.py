@@ -10,7 +10,6 @@ from org_parser.time import Timestamp
 def _make_ts(**kwargs: object) -> Timestamp:
     """Construct a minimal active date-only :class:`Timestamp`."""
     defaults: dict[str, object] = {
-        "raw": "<2024-01-15 Mon>",
         "is_active": True,
         "start_year": 2024,
         "start_month": 1,
@@ -46,18 +45,38 @@ def test_reformat_sets_dirty_flag() -> None:
     assert ts.dirty is True
 
 
-def test_mutating_field_does_not_auto_set_dirty() -> None:
-    """Fields are mutable; callers are responsible for calling mark_dirty."""
+def test_mutating_field_auto_sets_dirty() -> None:
+    """Mutating component fields immediately marks timestamp dirty."""
     ts = _make_ts()
     ts.start_year = 2025
-    # The dataclass does not auto-track mutations; dirty must be set explicitly.
+    assert ts.dirty is True
+
+
+def test_constructor_without_raw_generates_clean_render() -> None:
+    """Constructing without ``raw`` generates a canonical clean string."""
+    ts = Timestamp(is_active=True, start_year=2024, start_month=1, start_day=15)
     assert ts.dirty is False
+    assert str(ts) == "<2024-01-15>"
+
+
+def test_constructor_without_raw_renders_mutations_immediately() -> None:
+    """Field mutation is reflected immediately and marks timestamp dirty."""
+    ts = Timestamp(is_active=True, start_year=2024, start_month=1, start_day=15)
+    ts.start_year = 2030
+    assert ts.dirty is True
+    assert str(ts) == "<2030-01-15>"
+
+
+def test_raw_is_private_storage() -> None:
+    """The original source text is stored privately, not as ``.raw``."""
+    ts = Timestamp(is_active=True, start_year=2024, start_month=1, start_day=15)
+    sentinel = object()
+    assert getattr(ts, "raw", sentinel) is sentinel
 
 
 def test_repr_omits_raw_and_none_fields() -> None:
     """Timestamp repr excludes ``raw`` and ``None``-valued fields."""
     ts = _make_ts(
-        raw="<2025-12-12>",
         start_year=2025,
         start_month=12,
         start_day=12,
@@ -69,7 +88,6 @@ def test_repr_omits_raw_and_none_fields() -> None:
 def test_repr_includes_only_present_optional_fields() -> None:
     """Timestamp repr includes optional fields only when they are present."""
     ts = _make_ts(
-        raw="<2025-12-12 Fri 09:30>",
         start_year=2025,
         start_month=12,
         start_day=12,
@@ -98,14 +116,14 @@ def test_repr_includes_only_present_optional_fields() -> None:
 def test_str_clean_returns_raw() -> None:
     """A clean timestamp renders as its original ``raw`` text."""
     raw = "<2024-01-15 Mon>"
-    ts = _make_ts(raw=raw)
+    ts = Timestamp.from_source(raw)
     assert str(ts) == raw
 
 
 def test_str_clean_inactive_returns_raw() -> None:
     """A clean inactive timestamp renders as its original ``raw`` text."""
     raw = "[2024-01-15 Mon]"
-    ts = _make_ts(raw=raw, is_active=False)
+    ts = Timestamp.from_source(raw)
     assert str(ts) == raw
 
 
@@ -116,47 +134,47 @@ def test_str_clean_inactive_returns_raw() -> None:
 
 def test_str_dirty_date_only_active() -> None:
     """Dirty active date-only timestamp renders without time."""
-    ts = _make_ts(raw="<stale>")
+    ts = _make_ts()
     ts.start_year = 2026
     ts.start_month = 3
     ts.start_day = 5
     ts.start_dayname = "Thu"
-    ts.mark_dirty()
     assert str(ts) == "<2026-03-05 Thu>"
 
 
 def test_str_dirty_date_only_inactive() -> None:
     """Dirty inactive date-only timestamp uses ``[...]`` delimiters."""
-    ts = _make_ts(raw="[stale]", is_active=False)
-    ts.mark_dirty()
+    ts = _make_ts(is_active=True)
+    ts.is_active = False
     assert str(ts) == "[2024-01-15 Mon]"
 
 
 def test_str_dirty_date_only_no_dayname() -> None:
     """Dirty timestamp without a dayname omits it from output."""
-    ts = _make_ts(raw="<stale>", start_dayname=None)
-    ts.mark_dirty()
+    ts = _make_ts(start_dayname="Mon")
+    ts.start_dayname = None
     assert str(ts) == "<2024-01-15>"
 
 
 def test_str_dirty_with_time() -> None:
     """Dirty timestamp with start time renders ``HH:MM`` component."""
-    ts = _make_ts(raw="<stale>", start_hour=14, start_minute=30)
-    ts.mark_dirty()
+    ts = _make_ts(start_hour=14, start_minute=30)
+    ts.start_minute = 31
+    ts.start_minute = 30
     assert str(ts) == "<2024-01-15 Mon 14:30>"
 
 
 def test_str_dirty_with_time_zero_padded() -> None:
     """Hour and minute values are zero-padded to two digits."""
-    ts = _make_ts(raw="<stale>", start_hour=9, start_minute=5)
-    ts.mark_dirty()
+    ts = _make_ts(start_hour=9, start_minute=5)
+    ts.start_hour = 10
+    ts.start_hour = 9
     assert str(ts) == "<2024-01-15 Mon 09:05>"
 
 
 def test_str_dirty_same_day_time_range() -> None:
     """Dirty same-day time range renders as ``HH:MM-HH:MM`` within one bracket."""
     ts = _make_ts(
-        raw="<stale>",
         start_hour=10,
         start_minute=0,
         end_year=2024,
@@ -166,41 +184,41 @@ def test_str_dirty_same_day_time_range() -> None:
         end_hour=12,
         end_minute=0,
     )
-    ts.mark_dirty()
+    ts.end_minute = 1
+    ts.end_minute = 0
     assert str(ts) == "<2024-01-15 Mon 10:00-12:00>"
 
 
 def test_str_dirty_explicit_date_range_active() -> None:
     """Dirty explicit date range renders as ``<start>--<end>``."""
     ts = _make_ts(
-        raw="<stale>",
         end_year=2024,
         end_month=1,
         end_day=20,
         end_dayname="Sat",
     )
-    ts.mark_dirty()
+    ts.end_day = 21
+    ts.end_day = 20
     assert str(ts) == "<2024-01-15 Mon>--<2024-01-20 Sat>"
 
 
 def test_str_dirty_explicit_date_range_inactive() -> None:
     """Dirty explicit date range uses ``[...]`` delimiters when inactive."""
     ts = _make_ts(
-        raw="[stale]",
         is_active=False,
         end_year=2024,
         end_month=1,
         end_day=20,
         end_dayname="Sat",
     )
-    ts.mark_dirty()
+    ts.end_day = 21
+    ts.end_day = 20
     assert str(ts) == "[2024-01-15 Mon]--[2024-01-20 Sat]"
 
 
 def test_str_dirty_explicit_date_range_with_times() -> None:
     """Dirty explicit date range with times on both ends renders correctly."""
     ts = _make_ts(
-        raw="<stale>",
         start_hour=9,
         start_minute=0,
         end_year=2024,
@@ -210,7 +228,8 @@ def test_str_dirty_explicit_date_range_with_times() -> None:
         end_hour=17,
         end_minute=30,
     )
-    ts.mark_dirty()
+    ts.end_minute = 31
+    ts.end_minute = 30
     assert str(ts) == "<2024-01-15 Mon 09:00>--<2024-01-20 Sat 17:30>"
 
 
@@ -220,27 +239,24 @@ def test_str_dirty_explicit_date_range_with_times() -> None:
 
 
 def test_mutate_year_and_render() -> None:
-    """Mutating start_year and marking dirty produces correct output."""
-    ts = _make_ts(raw="<2024-01-15 Mon>")
+    """Mutating start_year produces correct output immediately."""
+    ts = _make_ts()
     ts.start_year = 2030
-    ts.mark_dirty()
     assert str(ts) == "<2030-01-15 Mon>"
 
 
 def test_mutate_active_flag_and_render() -> None:
-    """Flipping is_active changes delimiter style when dirty."""
-    ts = _make_ts(raw="<2024-01-15 Mon>", is_active=True)
+    """Flipping is_active changes delimiter style immediately."""
+    ts = _make_ts(is_active=True)
     ts.is_active = False
-    ts.mark_dirty()
     assert str(ts) == "[2024-01-15 Mon]"
 
 
 def test_add_time_to_date_only_timestamp() -> None:
     """Adding time components to a date-only timestamp renders the time."""
-    ts = _make_ts(raw="<2024-01-15 Mon>")
+    ts = _make_ts()
     ts.start_hour = 8
     ts.start_minute = 0
-    ts.mark_dirty()
     assert str(ts) == "<2024-01-15 Mon 08:00>"
 
 
@@ -271,35 +287,34 @@ def test_str_dirty_cross_month_range_not_collapsed() -> None:
     date when the timestamp was dirty.
     """
     ts = _make_ts(
-        raw="<stale>",
         start_dayname="Wed",
         end_year=2024,
         end_month=2,
         end_day=15,
         end_dayname="Thu",
     )
-    ts.mark_dirty()
+    ts.end_day = 16
+    ts.end_day = 15
     assert str(ts) == "<2024-01-15 Wed>--<2024-02-15 Thu>"
 
 
 def test_str_dirty_cross_year_range_same_day_not_collapsed() -> None:
     """Cross-year range with the same month and day renders as explicit range."""
     ts = _make_ts(
-        raw="<stale>",
         start_dayname="Mon",
         end_year=2025,
         end_month=1,
         end_day=15,
         end_dayname="Wed",
     )
-    ts.mark_dirty()
+    ts.end_day = 16
+    ts.end_day = 15
     assert str(ts) == "<2024-01-15 Mon>--<2025-01-15 Wed>"
 
 
 def test_str_dirty_same_day_time_range_still_works_after_fix() -> None:
     """Same-day time range (start/end same date, different times) is unaffected."""
     ts = _make_ts(
-        raw="<stale>",
         start_hour=9,
         start_minute=0,
         end_year=2024,
@@ -309,7 +324,8 @@ def test_str_dirty_same_day_time_range_still_works_after_fix() -> None:
         end_hour=11,
         end_minute=30,
     )
-    ts.mark_dirty()
+    ts.end_minute = 31
+    ts.end_minute = 30
     assert str(ts) == "<2024-01-15 Mon 09:00-11:30>"
 
 
@@ -328,6 +344,7 @@ def test_str_dirty_same_day_time_range_still_works_after_fix() -> None:
 )
 def test_str_dirty_date_zero_padding(year: int, month: int, day: int, expected: str) -> None:
     """Year, month, and day are always zero-padded in dirty rendering."""
-    ts = _make_ts(raw="<stale>", start_year=year, start_month=month, start_day=day)
-    ts.mark_dirty()
+    ts = _make_ts(start_year=year, start_month=month, start_day=day)
+    ts.start_day = day + 1 if day < 31 else day - 1
+    ts.start_day = day
     assert str(ts) == expected

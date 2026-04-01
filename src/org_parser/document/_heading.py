@@ -134,6 +134,9 @@ class Heading:
         self._dirty = False
 
         self._adopt_element(self._title)
+        self._adopt_timestamp(self._scheduled)
+        self._adopt_timestamp(self._closed)
+        self._adopt_timestamp(self._deadline)
 
         self._adopt_element(self._properties)
         self._adopt_element(self._logbook)
@@ -1147,13 +1150,22 @@ class Heading:
         """Set one planning timestamp field."""
         if planning_keyword == SCHEDULED:
             self._scheduled = value
+            self._adopt_timestamp(self._scheduled)
         elif planning_keyword == DEADLINE:
             self._deadline = value
+            self._adopt_timestamp(self._deadline)
         elif planning_keyword == CLOSED:
             self._closed = value
+            self._adopt_timestamp(self._closed)
         else:
             raise ValueError(f"Unknown planning keyword: {planning_keyword!r}")
         self.mark_dirty()
+
+    def _adopt_timestamp(self, value: Timestamp | None) -> None:
+        """Attach timestamp parent ownership without changing dirty state."""
+        if value is None:
+            return
+        value.parent = self
 
     @property
     def siblings(self) -> list[Heading]:

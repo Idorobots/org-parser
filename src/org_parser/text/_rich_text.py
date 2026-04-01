@@ -127,6 +127,7 @@ class RichText:
         self._document: Document | None = None
         self._source: bytes | None = None
         self._dirty = False
+        self._adopt_parts(self._parts)
 
     @property
     def parts(self) -> list[InlineObject]:
@@ -208,7 +209,9 @@ class RichText:
         'AB'
         ```
         """
-        self._parts.append(_coerce_inline_object(part))
+        inline_part = _coerce_inline_object(part)
+        self._parts.append(inline_part)
+        self._adopt_inline_part(inline_part)
         self.mark_dirty()
 
     def prepend(self, part: InlineObject | str) -> None:
@@ -223,7 +226,9 @@ class RichText:
         'AB'
         ```
         """
-        self._parts.insert(0, _coerce_inline_object(part))
+        inline_part = _coerce_inline_object(part)
+        self._parts.insert(0, inline_part)
+        self._adopt_inline_part(inline_part)
         self.mark_dirty()
 
     def insert(self, index: int, part: InlineObject | str) -> None:
@@ -238,8 +243,20 @@ class RichText:
         'BAC'
         ```
         """
-        self._parts.insert(index, _coerce_inline_object(part))
+        inline_part = _coerce_inline_object(part)
+        self._parts.insert(index, inline_part)
+        self._adopt_inline_part(inline_part)
         self.mark_dirty()
+
+    def _adopt_parts(self, parts: list[InlineObject]) -> None:
+        """Attach parent ownership to mutable inline objects."""
+        for part in parts:
+            self._adopt_inline_part(part)
+
+    def _adopt_inline_part(self, part: InlineObject) -> None:
+        """Attach this rich-text as owner for mutable inline object parts."""
+        if isinstance(part, Timestamp):
+            part.parent = self
 
     # -- factory methods -----------------------------------------------------
 
