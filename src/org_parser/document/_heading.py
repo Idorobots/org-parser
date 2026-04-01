@@ -37,6 +37,7 @@ from org_parser.element._element import (
     Element,
     build_semantic_repr,
     element_from_error_or_unknown,
+    ensure_trailing_newline,
 )
 from org_parser.element._structure_recovery import (
     attach_affiliated_keywords,
@@ -1574,9 +1575,9 @@ def _render_heading_dirty(heading: Heading) -> str:
         parts.append(f"{' '.join(planning_entries)}\n")
 
     if heading.properties is not None:
-        parts.append(str(heading.properties))
+        parts.append(ensure_trailing_newline(str(heading.properties)))
     if heading.logbook is not None:
-        parts.append(str(heading.logbook))
+        parts.append(ensure_trailing_newline(str(heading.logbook)))
 
-    parts.extend(str(element) for element in heading.body)
+    parts.extend(ensure_trailing_newline(str(element)) for element in heading.body)
     return "".join(parts)

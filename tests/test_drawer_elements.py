@@ -230,6 +230,28 @@ def test_dirty_document_drawer_order_is_properties_then_logbook() -> None:
     assert rendered.index(":PROPERTIES:") < rendered.index(":LOGBOOK:")
 
 
+def test_dirty_document_renders_newline_between_keyword_and_logbook() -> None:
+    """Dirty document rendering separates keyword and logbook lines."""
+    document = loads("#+TITLE: Logbook")
+    document.logbook = Logbook()
+
+    assert document.logbook is not None
+    document.logbook.clock_entries = [Clock.from_source("CLOCK: [2025-10-10]")]
+
+    assert str(document) == ("#+TITLE: Logbook\n" ":LOGBOOK:\n" "CLOCK: [2025-10-10]\n" ":END:\n")
+
+
+def test_dirty_heading_render_separates_body_and_child_heading() -> None:
+    """Dirty heading render keeps child heading on a new line."""
+    document = loads("* H\nBody")
+    heading = document.children[0]
+    child = loads("* Child").children[0]
+
+    heading.children = [child]
+
+    assert heading.render() == "* H\nBody\n** Child\n"
+
+
 def test_drawer_body_setter_marks_dirty() -> None:
     """Replacing drawer body marks drawer and document as dirty."""
     document = loads(":NOTE:\nA\n:END:\n")

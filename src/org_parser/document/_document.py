@@ -30,6 +30,7 @@ from org_parser.element._element import (
     Element,
     build_semantic_repr,
     element_from_error_or_unknown,
+    ensure_trailing_newline,
 )
 from org_parser.element._keyword import Keyword
 from org_parser.text._rich_text import RichText
@@ -1068,16 +1069,22 @@ def _render_document_dirty(document: Document) -> str:
 
     # Render dedicated keywords in the canonical fixed order.
     for key in _DEDICATED_ORDER:
-        parts.extend(str(kw) for kw in keywords if kw.key == key)
+        parts.extend(
+            ensure_trailing_newline(str(keyword)) for keyword in keywords if keyword.key == key
+        )
 
     # Render non-dedicated keywords in their list order.
-    parts.extend(str(kw) for kw in keywords if kw.key not in _DEDICATED_KEYS)
+    parts.extend(
+        ensure_trailing_newline(str(keyword))
+        for keyword in keywords
+        if keyword.key not in _DEDICATED_KEYS
+    )
 
     if document.properties is not None:
-        parts.append(str(document.properties))
+        parts.append(ensure_trailing_newline(str(document.properties)))
     if document.logbook is not None:
-        parts.append(str(document.logbook))
+        parts.append(ensure_trailing_newline(str(document.logbook)))
 
-    parts.extend(str(element) for element in document.body)
+    parts.extend(ensure_trailing_newline(str(element)) for element in document.body)
 
     return "".join(parts)

@@ -23,9 +23,12 @@ SCHEDULED: <2025-12-12, at some point>
 
 The timestamp is parsed with an error, but it's not available in =document.errors= property.
 
-** TODO Keyword stringification issue
+** DONE Keyword stringification issue
 :PROPERTIES:
 :context: [[file:~/projects/software/org-mode-parser/src/org_parser/document/_document.py]]
+:END:
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-04-01 Wed 12:19]
 :END:
 
 Filename: /home/k/projects/software/org-mode-parser/src/org_parser/document/_document.py
@@ -33,6 +36,7 @@ Filename: /home/k/projects/software/org-mode-parser/src/org_parser/document/_doc
 #+begin_example
 >>> from org_parser.element import Logbook
 >>> from org_parser.time import Clock
+>>> from org_parser import loads
 >>> document = loads("#+TITLE: Logbook")
 >>> document.logbook = Logbook()
 >>> document.logbook.clock_entries = [Clock.from_source("CLOCK: [2025-10-10]")]
