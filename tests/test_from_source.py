@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from org_parser.document import Document, Heading
-from org_parser.element import Element, List, Paragraph
+from org_parser.element import Element, List, ListItem, Paragraph
 from org_parser.text import Bold, RichText
 from org_parser.time import Timestamp
 
@@ -88,6 +88,27 @@ def test_element_subclass_from_source_parses_recovered_list() -> None:
     assert len(parsed_list.items) == 2
     assert str(parsed_list.items[0].first_line) == "foo"
     assert str(parsed_list.items[1].first_line) == "bar"
+
+
+def test_list_item_from_source_parses_single_item() -> None:
+    """ListItem.from_source parses one-item list input."""
+    item = ListItem.from_source("- foo\n")
+
+    assert item.bullet == "-"
+    assert item.first_line is not None
+    assert str(item.first_line) == "foo"
+
+
+def test_list_item_from_source_requires_single_list_item() -> None:
+    """ListItem.from_source rejects list source with multiple items."""
+    with pytest.raises(ValueError, match="Unexpected parse tree structure"):
+        ListItem.from_source("- foo\n- bar\n")
+
+
+def test_list_item_from_source_requires_list_structure() -> None:
+    """ListItem.from_source rejects non-list source text."""
+    with pytest.raises(ValueError, match="Unexpected parse tree structure"):
+        ListItem.from_source("plain text\n")
 
 
 def test_element_base_from_source_returns_single_element() -> None:

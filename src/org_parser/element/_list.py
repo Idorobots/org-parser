@@ -106,6 +106,30 @@ class ListItem(Element):
         item._document = document
         return item
 
+    @classmethod
+    def from_source(cls, source: str) -> ListItem:
+        """Parse *source* and return one strict [org_parser.element.ListItem][].
+
+        The source must parse to exactly one list item wrapped by one plain
+        list element and no other semantic nodes.
+
+        Args:
+            source: Org source text containing exactly one list item.
+
+        Returns:
+            Parsed [org_parser.element.ListItem][].
+
+        Raises:
+            ValueError: If parsing fails or the structure is not one list item.
+        """
+        from org_parser._from_source import parse_source_with_extractor
+
+        list_item, _ = parse_source_with_extractor(
+            source,
+            extractor=_extract_single_list_item_node,
+        )
+        return list_item
+
     @property
     def bullet(self) -> str:
         """Bullet marker (``-``, ``+``, ``*``, ``.``, or ``)``)."""
@@ -571,6 +595,25 @@ class List(Element):
     def __getitem__(self, index: int | slice) -> ListItem | list[ListItem]:
         """Return one list item (or list-item slice)."""
         return self._items[index]
+
+
+def _extract_single_list_item_node(document: Document) -> ListItem | None:
+    """Return the sole list item semantic node from parsed source."""
+    if (
+        document.keywords
+        or len(document.properties) > 0
+        or len(document.logbook) > 0
+        or document.children
+        or len(document.body) != 1
+    ):
+        return None
+
+    list_element = document.body[0]
+    if not isinstance(list_element, List):
+        return None
+    if len(list_element.items) != 1:
+        return None
+    return list_element.items[0]
 
 
 def _extract_optional_field_text(

@@ -161,9 +161,12 @@ def _render_heading_dirty(heading: Heading) -> str:
 
 
 This should add the completion counter if set.
-** TODO List item from source creation should extract the initial item from a list.
+** DONE List item from source creation should extract the initial item from a list.
 :PROPERTIES:
 :context: [[file:~/projects/software/org-mode-parser/src/org_parser/element/_list.py::>>> document.body\[0\].items.append(ListItem(bullet="-", first_line=RichText("Item 1")))]]
+:END:
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-04-01 Wed 14:46]
 :END:
 
 Filename: /home/k/projects/software/org-mode-parser/src/org_parser/element/_list.py
@@ -193,9 +196,13 @@ Filename: /home/k/projects/software/org-mode-parser/src/org_parser/element/_para
 #+end_example
 
 Paragraph no longer needs the indent, it's handled by =Indent= class.
-** TODO Indent block should use the =whitespace= field for the indent text
+** CANCELLED Indent block should use the =whitespace= field for the indent text
 :PROPERTIES:
 :context: [[file:~/projects/software/org-mode-parser/src/org_parser/element/_structure.py]]
+:END:
+:LOGBOOK:
+- State "CANCELLED"  from "TODO"       [2026-04-01 Wed 14:36] \\
+  This is actually correct.
 :END:
 
 Filename: /home/k/projects/software/org-mode-parser/src/org_parser/element/_structure.py
@@ -258,6 +265,8 @@ Mark dirty is required for the append to take effect - could use a custom list w
 The line and column numbers are useful for sorting the nodes/elements. It makes sense to add these as attributes. They should delegate to the internal tree-sitter node start line and column if available or return =None= if not available.
 
 ** TODO Rename Heading.repeated_tasks to repeats to match the logbook.
+Update the heading class field name and tests. Make sure to update the documentation examples.
+
 * Initial release
 ** DONE Supported syntax in the README.org
 :LOGBOOK:
