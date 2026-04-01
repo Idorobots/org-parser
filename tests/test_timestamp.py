@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 
 from org_parser.time import Timestamp
@@ -145,6 +147,38 @@ def test_from_source_extracts_repeater_upper_bound_components() -> None:
     assert ts.repeater_unit == "m"
     assert ts.repeater_cap_value == 3
     assert ts.repeater_cap_unit == "m"
+
+
+def test_from_datetime_defaults_to_active_timestamp() -> None:
+    """``from_datetime`` creates an active timestamp by default."""
+    dt = datetime(2025, 3, 8, 17, 59)
+    ts = Timestamp.from_datetime(dt)
+
+    assert ts.is_active is True
+    assert ts.start_year == 2025
+    assert ts.start_month == 3
+    assert ts.start_day == 8
+    assert ts.start_dayname == "Sat"
+    assert ts.start_hour == 17
+    assert ts.start_minute == 59
+    assert str(ts) == "<2025-03-08 Sat 17:59>"
+
+
+def test_from_datetime_accepts_inactive_override() -> None:
+    """``from_datetime`` can create inactive timestamp delimiters."""
+    dt = datetime(2025, 3, 8, 17, 59)
+    ts = Timestamp.from_datetime(dt, is_active=False)
+    assert ts.is_active is False
+    assert str(ts) == "[2025-03-08 Sat 17:59]"
+
+
+def test_from_datetime_ignores_seconds_and_microseconds() -> None:
+    """Timestamp creation from datetime keeps minute precision only."""
+    dt = datetime(2025, 3, 8, 17, 59, 42, 123456)
+    ts = Timestamp.from_datetime(dt)
+    assert ts.start_hour == 17
+    assert ts.start_minute == 59
+    assert str(ts) == "<2025-03-08 Sat 17:59>"
 
 
 # ---------------------------------------------------------------------------

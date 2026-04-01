@@ -37,6 +37,9 @@ if TYPE_CHECKING:
 __all__ = ["Timestamp"]
 
 
+_WEEKDAY_ABBREVIATIONS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+
 class Timestamp(InlineObject):
     """Parsed Org timestamp with component-level fields.
 
@@ -186,6 +189,32 @@ class Timestamp(InlineObject):
         if not isinstance(part, cls):
             raise ValueError("Unexpected parse tree structure")
         return part
+
+    @classmethod
+    def from_datetime(
+        cls,
+        value: datetime,
+        *,
+        is_active: bool = True,
+    ) -> Timestamp:
+        """Create a timestamp from one Python ``datetime`` start value.
+
+        The datetime is mapped onto the timestamp start components. End,
+        repeater, and delay components are left unset.
+
+        Args:
+            value: Source datetime for the timestamp start components.
+            is_active: Whether to render the timestamp with active delimiters.
+        """
+        return cls(
+            is_active=is_active,
+            start_year=value.year,
+            start_month=value.month,
+            start_day=value.day,
+            start_dayname=_WEEKDAY_ABBREVIATIONS[value.weekday()],
+            start_hour=value.hour,
+            start_minute=value.minute,
+        )
 
     @classmethod
     def from_node(cls, node: tree_sitter.Node, document: Document) -> Timestamp:
