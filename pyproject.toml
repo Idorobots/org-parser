@@ -1,16 +1,36 @@
 [tool.poetry]
 name = "org-parser"
-version = "0.1.0"
-description = "Python bindings for the tree-sitter org-mode parser"
-authors = []
+version = "0.23.5"
+description = "A parser for Org Mode documents"
+authors = ["Kajetan Rzepecki <k@spartan.works>"]
+maintainers = ["Kajetan Rzepecki <k@spartan.works>"]
+homepage = "https://github.com/Idorobots/org-parser"
+repository = "https://github.com/Idorobots/org-parser"
+documentation = "https://idorobots.github.io/org-parser/"
+keywords = ["parsing", "tree-sitter", "org", "org-mode"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Compilers",
+  "Topic :: Text Processing :: Linguistic",
+  "Typing :: Typed",
+]
 license = "MIT"
-readme = "README.org"
+readme = "docs/index.md"
 packages = [{ include = "org_parser", from = "src" }]
+
+[tool.poetry.urls]
+"Issue Tracker" = "https://github.com/Idorobots/org-parser/issues"
+"Releases" = "https://github.com/Idorobots/org-parser/releases"
 
 [tool.poetry.dependencies]
 python = "^3.12"
 tree-sitter = ">=0.25,<1.0"
-tree-sitter-org = ">=0.23.5"
+tree-sitter-org = ">=0.23.6"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.11"

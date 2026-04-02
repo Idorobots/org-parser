@@ -520,4 +520,6 @@ If the docs/index.md file is outdated, the pipeline should fail. To prevent merg
 :END:
 There are example files in the repository unter examples/ directory. I'd like these to be used for snapshot testing the parser.
 
-** Library release
+** TODO Library release
+Update the project configuration file to add all the necessary information that PyPi needs for a package to be publishable.
+Add a release workflow that will run whenever a tag is pushed - it should publish the =org-parser= library to pypi.
