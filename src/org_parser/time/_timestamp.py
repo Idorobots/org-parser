@@ -173,6 +173,7 @@ class Timestamp(InlineObject):
 
         Raises:
             ValueError: If parsing fails or the structure is not one timestamp.
+            TypeError: If the parsed inline object is not a timestamp.
         """
         from org_parser.text._inline import PlainText
         from org_parser.text._rich_text import RichText
@@ -187,7 +188,7 @@ class Timestamp(InlineObject):
             raise ValueError("Unexpected parse tree structure")
         part = parts[0]
         if not isinstance(part, cls):
-            raise ValueError("Unexpected parse tree structure")
+            raise TypeError("Unexpected parse tree structure")
         return part
 
     @classmethod
@@ -609,7 +610,6 @@ class Timestamp(InlineObject):
         the string from component fields.
         """
         if not self._dirty:
-            assert self._raw is not None
             return self._raw
         return _render_timestamp(self)
 
@@ -745,10 +745,8 @@ def _render_timestamp(ts: Timestamp) -> str:
     )
 
     if is_explicit_range:
-        end_year = ts.end_year
-        end_month = ts.end_month
-        end_day = ts.end_day
-        assert end_year is not None and end_month is not None and end_day is not None
+        if ts.end_year is None or ts.end_month is None or ts.end_day is None:
+            raise ValueError("Invalid timestamp state for explicit end-date range")
         start = _render_date_part(
             ts.start_year,
             ts.start_month,
@@ -759,9 +757,9 @@ def _render_timestamp(ts: Timestamp) -> str:
             repeater_delay_suffix,
         )
         end = _render_date_part(
-            end_year,
-            end_month,
-            end_day,
+            ts.end_year,
+            ts.end_month,
+            ts.end_day,
             ts.end_dayname,
             ts.end_hour,
             ts.end_minute,
@@ -769,7 +767,8 @@ def _render_timestamp(ts: Timestamp) -> str:
         return f"{open_delim}{start}{close_delim}--{open_delim}{end}{close_delim}"
 
     if is_same_day_time_range:
-        assert ts.end_hour is not None and ts.end_minute is not None
+        if ts.end_hour is None or ts.end_minute is None:
+            raise ValueError("Invalid timestamp state for same-day end-time range")
         date_part = _render_date_part(
             ts.start_year,
             ts.start_month,

@@ -204,7 +204,7 @@ class Element:
         self._keywords: list[AffiliatedKeyword] = []
 
     @classmethod
-    def from_source(cls: type[_ElementT], source: str) -> _ElementT:
+    def from_source(cls: type[_ElementT], source: str) -> _ElementT:  # noqa: PYI019
         """Parse *source* and return one strict semantic element.
 
         The source must parse to exactly one non-heading semantic element.
@@ -216,8 +216,8 @@ class Element:
             The parsed semantic element instance.
 
         Raises:
-            ValueError: If parsing fails, structure is not exactly one element,
-                or the parsed element does not match *cls*.
+            ValueError: If parsing fails or structure is not exactly one element.
+            TypeError: If the parsed element does not match *cls*.
         """
         from org_parser._from_source import parse_document_from_source
 
@@ -238,7 +238,7 @@ class Element:
 
         semantic_node: Element = semantic_nodes[0]
         if not isinstance(semantic_node, cls):
-            raise ValueError(
+            raise TypeError(
                 f"Parsed element is {semantic_node.__class__.__name__}, " f"expected {cls.__name__}"
             )
         return semantic_node

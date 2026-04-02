@@ -1474,7 +1474,7 @@ def _find_first_subheading(node: tree_sitter.Node) -> tree_sitter.Node | None:
     return None
 
 
-def _recover_heading_body_lists_and_extract_clocks(
+def _recover_heading_body_lists_and_extract_clocks(  # noqa: C901
     body: list[Element],
     *,
     document: Document,
@@ -1596,7 +1596,7 @@ def shift_heading_subtree(heading: Heading, *, delta: int) -> None:
         shift_heading_subtree(child, delta=delta)
 
 
-def _render_heading_dirty(heading: Heading) -> str:
+def _render_heading_dirty(heading: Heading) -> str:  # noqa: C901
     """Render a dirty heading from semantic fields only."""
     line_parts: list[str] = ["*" * heading.level]
     title_text = str(heading.title) if heading.title is not None else None

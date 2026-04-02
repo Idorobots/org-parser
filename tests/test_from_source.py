@@ -144,7 +144,7 @@ def test_timestamp_from_source_requires_exactly_one_timestamp() -> None:
 
 def test_element_subclass_from_source_rejects_mismatched_element_type() -> None:
     """Element subclasses reject valid source for a different element class."""
-    with pytest.raises(ValueError, match="expected List"):
+    with pytest.raises(TypeError, match="expected List"):
         List.from_source("plain text\n")
 
 

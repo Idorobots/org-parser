@@ -135,7 +135,7 @@ class TestDocumentManual:
         assert doc.filename == "test.org"
         assert doc.title is None
         assert doc.author is None
-        # No #+CATEGORY: keyword → falls back to filename stem.
+        # NOTE: No CATEGORY keyword → falls back to filename stem.
         assert doc.category is not None
         assert str(doc.category) == "test"
         assert doc.description is None
@@ -456,7 +456,7 @@ class TestHeadingFields:
     def test_tags(self, example_file: Callable[[str], Path]) -> None:
         """heading_tags are extracted as a list of individual strings."""
         doc = _load_document(example_file("priorities-and-special-headings.org"))
-        # "* TODO [#A] Critical: ... :ops:critical:"
+        # * TODO [#A] Critical: ... :ops:critical:
         tagged = [h for h in doc.children if len(h.heading_tags) > 0]
         assert len(tagged) > 0
         # Check that tags are individual strings, not the full `:a:b:` form

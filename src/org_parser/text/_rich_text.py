@@ -393,7 +393,7 @@ def _parse_inline_nodes(
     return [_parse_inline_node(node, document) for node in nodes]
 
 
-def _parse_inline_node(  # noqa: PLR0911,PLR0912,PLR0915
+def _parse_inline_node(  # noqa: PLR0911,PLR0912,PLR0915,C901
     node: tree_sitter.Node,
     document: Document,
 ) -> InlineObject:

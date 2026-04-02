@@ -1061,12 +1061,12 @@ def _parse_todo_states(
 
     for todo in todo_values:
         in_done_group = False
-        for token in str(todo).split():
-            if token == "|":
+        for state_part in str(todo).split():
+            if state_part == "|":
                 in_done_group = True
                 continue
 
-            state = _todo_state_name(token)
+            state = _todo_state_name(state_part)
             if state is None:
                 continue
             if in_done_group:
@@ -1082,13 +1082,13 @@ def _parse_todo_states(
     return all_states, todo_states, done_states
 
 
-def _todo_state_name(token: str) -> str | None:
+def _todo_state_name(state_part: str) -> str | None:
     """Extract one TODO state token name from keyword syntax.
 
     This strips optional fast-selection metadata, for example:
     ``TODO(t)`` -> ``TODO`` and ``DONE(d@/!)`` -> ``DONE``.
     """
-    stripped = token.strip()
+    stripped = state_part.strip()
     if stripped == "":
         return None
     head, _, _ = stripped.partition("(")
