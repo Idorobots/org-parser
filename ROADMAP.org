@@ -500,8 +500,11 @@ Expand the basic usage docs in docs/usage.md with examples of loading documents 
 :END:
 Create docs/traversal.md file that outlines the document structure - parent, children, =Sequence= interface and iteration. Use short, instructive examples. Add =is_root=, =is_leaf= and any attributes/methods that can aid tree traversal to the docs.
 
-** TODO Mutability docs
-Create docs/mutability.md file that outlines the mutability of the semantic document tree - specifically describe the =dirty= flags, =rerender= operation and describe how the original formatting/whitespace is preserved by default and reconstructed from scratch when dirty.
+** DONE Mutability docs
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-04-02 Thu 21:26]
+:END:
+Create docs/mutability.md file that outlines the mutability of the semantic document tree - specifically describe the =dirty= flags, =reformat= operation and describe how the original formatting/whitespace is preserved by default and reconstructed from scratch when dirty.
 Describe the =DirtyList= wrapper with some usage examples.
 
 ** Automated tests based on the example files.
