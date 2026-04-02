@@ -21,6 +21,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Pandoc
+        run: sudo apt-get update && sudo apt-get install --yes pandoc
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -39,6 +42,9 @@ jobs:
 
       - name: Install Python dependencies
         run: poetry install
+
+      - name: Generate docs index from README
+        run: pandoc README.org --from=org --to=gfm --output=docs/index.md
 
       - name: Build docs
         run: poetry run task docs-build
