@@ -747,9 +747,8 @@ class Heading:
 
         def on_repeats_mutation(wrapped: DirtyList[Repeat]) -> None:
             self._repeats = list(wrapped)
-            logbook = self._ensure_logbook()
-            logbook.repeats = self._repeats
-            self._repeats = list(logbook.repeats)
+            logbook = self._logbook
+            logbook.repeats = self._extract_logbook_repeats(self._repeats)
             self._sync_repeats()
             self.mark_dirty()
 
@@ -759,9 +758,8 @@ class Heading:
     def repeats(self, value: list[Repeat]) -> None:
         """Set repeats and synchronize them into the logbook drawer."""
         self._repeats = list(value)
-        logbook = self._ensure_logbook()
-        logbook.repeats = self._repeats
-        self._repeats = list(logbook.repeats)
+        logbook = self._logbook
+        logbook.repeats = self._extract_logbook_repeats(self._repeats)
         self._sync_repeats()
         self.mark_dirty()
 
@@ -784,8 +782,8 @@ class Heading:
         ```
         """
         self._repeats = [*self._repeats, repeat]
-        logbook = self._ensure_logbook()
-        logbook.repeats = self._repeats
+        logbook = self._logbook
+        logbook.repeats = [*logbook.repeats, repeat]
         self._sync_repeats()
         self.mark_dirty()
 
@@ -809,7 +807,7 @@ class Heading:
 
         def on_clock_entries_mutation(wrapped: DirtyList[Clock]) -> None:
             self._clock_entries = list(wrapped)
-            logbook = self._ensure_logbook()
+            logbook = self._logbook
             logbook.clock_entries = self._clock_entries
             self._clock_entries = list(logbook.clock_entries)
             self.mark_dirty()
@@ -820,7 +818,7 @@ class Heading:
     def clock_entries(self, value: list[Clock]) -> None:
         """Set clock entries and synchronize them into the logbook drawer."""
         self._clock_entries = list(value)
-        logbook = self._ensure_logbook()
+        logbook = self._logbook
         logbook.clock_entries = self._clock_entries
         self._clock_entries = list(logbook.clock_entries)
         self.mark_dirty()
@@ -1177,6 +1175,17 @@ class Heading:
         for repeat in self._repeats:
             repeat.attach_document(self._document)
 
+    def _extract_logbook_repeats(self, repeats: Sequence[Repeat]) -> list[Repeat]:
+        """Return repeats that should be serialized into the heading logbook."""
+        body_repeats, _ = _recover_heading_body_lists_and_extract_clocks(
+            self._body,
+            document=self._document,
+        )
+        if not body_repeats:
+            return list(repeats)
+        body_repeat_ids = {id(repeat) for repeat in body_repeats}
+        return [repeat for repeat in repeats if id(repeat) not in body_repeat_ids]
+
     def _sync_clock_entries(self) -> None:
         """Synchronize clock cache from logbook and heading body."""
         _, body_clocks = _recover_heading_body_lists_and_extract_clocks(
@@ -1188,10 +1197,6 @@ class Heading:
             self._clock_entries = list(self._logbook.clock_entries)
             return
         self._clock_entries = [*self._logbook.clock_entries, *body_clocks]
-
-    def _ensure_logbook(self) -> Logbook:
-        """Return heading logbook drawer."""
-        return self._logbook
 
     def _set_planning_timestamp(
         self,

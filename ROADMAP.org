@@ -74,6 +74,26 @@ Instead, please coerce the value to a =RichText=.
 :END:
 Add a convenience field to =Repeat= that indicaties if the =after= property is in the =parent.document.done_states=. Its semantics should be the same as =Heading.is_completed=.
 
+** DONE Code review comment
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-04-05 Sun 21:50]
+:END:
+:PROPERTIES:
+:context: [[file:~/projects/software/org-mode-parser/src/org_parser/document/_heading.py::def _ensure_logbook(self) -> Logbook:
+ """Return heading logbook drawer."""
+ return self._logbook]]
+:END:
+
+Filename: /home/k/projects/software/org-mode-parser/src/org_parser/document/_heading.py
+
+#+begin_example
+
+    def _ensure_logbook(self) -> Logbook:
+        """Return heading logbook drawer."""
+        return self._logbook
+#+end_example
+
+Can this be removed? Makes no sense.
 * Next
 ** TODO =to_json()= convenience method
 All objects should be convertible to "simple" JSON objects:

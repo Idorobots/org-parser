@@ -215,6 +215,54 @@ def test_repeats_append_creates_logbook_when_missing() -> None:
     assert len(heading.logbook.repeats) == 1
 
 
+def test_add_repeat_does_not_duplicate_existing_body_repeat() -> None:
+    """Adding a logbook repeat leaves recovered heading-body repeats unique."""
+    document = loads("* H\n" '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n')
+    heading = document.children[0]
+    body_repeat = heading.repeats[0]
+
+    heading.add_repeat(
+        Repeat(
+            after="CANCELLED",
+            before="TODO",
+            timestamp=Timestamp(
+                is_active=False,
+                start_year=2026,
+                start_month=3,
+                start_day=9,
+            ),
+        )
+    )
+
+    assert len(heading.repeats) == 2
+    assert len(heading.logbook.repeats) == 1
+    assert all(repeat is not body_repeat for repeat in heading.logbook.repeats)
+
+
+def test_repeats_append_does_not_duplicate_existing_body_repeat() -> None:
+    """Mutating heading repeats keeps body repeats out of logbook serialization."""
+    document = loads("* H\n" '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n')
+    heading = document.children[0]
+    body_repeat = heading.repeats[0]
+
+    heading.repeats.append(
+        Repeat(
+            after="CANCELLED",
+            before="TODO",
+            timestamp=Timestamp(
+                is_active=False,
+                start_year=2026,
+                start_month=3,
+                start_day=9,
+            ),
+        )
+    )
+
+    assert len(heading.repeats) == 2
+    assert len(heading.logbook.repeats) == 1
+    assert all(repeat is not body_repeat for repeat in heading.logbook.repeats)
+
+
 def test_heading_clock_cache_extracts_logbook_clock_entries() -> None:
     """Heading exposes cached ``CLOCK`` entries extracted from ``LOGBOOK``."""
     document = loads(
