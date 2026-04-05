@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from org_parser._node import is_error_node
 from org_parser._nodes import (
@@ -506,7 +506,10 @@ class Heading:
         ```
         """
         if "CATEGORY" in self._properties:
-            return self._properties["CATEGORY"]
+            category = self._properties["CATEGORY"]
+            if isinstance(category, RichText):
+                return category
+            return coerce_rich_text(str(category))
         return None
 
     @heading_category.setter
@@ -672,7 +675,7 @@ class Heading:
         return self._properties
 
     @properties.setter
-    def properties(self, value: Properties | dict[str, RichText | str] | None) -> None:
+    def properties(self, value: Properties | dict[str, Any] | None) -> None:
         """Set merged heading ``PROPERTIES`` drawer.
 
         Assigning ``None`` resets this to an empty drawer instance.
@@ -744,9 +747,9 @@ class Heading:
 
         def on_repeats_mutation(wrapped: DirtyList[Repeat]) -> None:
             self._repeats = list(wrapped)
-            logbook = self._ensure_logbook()
-            logbook.repeats = self._repeats
-            self._repeats = list(logbook.repeats)
+            logbook = self._logbook
+            logbook.repeats = self._extract_logbook_repeats(self._repeats)
+            self._sync_repeats()
             self.mark_dirty()
 
         return DirtyList(self._repeats, on_mutation=on_repeats_mutation)
@@ -755,13 +758,13 @@ class Heading:
     def repeats(self, value: list[Repeat]) -> None:
         """Set repeats and synchronize them into the logbook drawer."""
         self._repeats = list(value)
-        logbook = self._ensure_logbook()
-        logbook.repeats = self._repeats
-        self._repeats = list(logbook.repeats)
+        logbook = self._logbook
+        logbook.repeats = self._extract_logbook_repeats(self._repeats)
+        self._sync_repeats()
         self.mark_dirty()
 
-    def add_repeated_task(self, repeat: Repeat) -> None:
-        """Append one repeated task and synchronize it into the logbook.
+    def add_repeat(self, repeat: Repeat) -> None:
+        """Append one repeat and synchronize it into the logbook.
 
         Example:
         ```python
@@ -770,7 +773,7 @@ class Heading:
         >>> from org_parser.time import Timestamp
         >>> heading = loads("* TODO Heading 1").children[0]
         >>> ts = Timestamp.from_source("<2025-10-10>")
-        >>> heading.add_repeated_task(Repeat(after="DONE", before="TODO", timestamp=ts))
+        >>> heading.add_repeat(Repeat(after="DONE", before="TODO", timestamp=ts))
         >>> print(str(heading))
         * TODO Heading 1
         :LOGBOOK:
@@ -779,8 +782,9 @@ class Heading:
         ```
         """
         self._repeats = [*self._repeats, repeat]
-        logbook = self._ensure_logbook()
-        logbook.repeats = self._repeats
+        logbook = self._logbook
+        logbook.repeats = [*logbook.repeats, repeat]
+        self._sync_repeats()
         self.mark_dirty()
 
     @property
@@ -803,7 +807,7 @@ class Heading:
 
         def on_clock_entries_mutation(wrapped: DirtyList[Clock]) -> None:
             self._clock_entries = list(wrapped)
-            logbook = self._ensure_logbook()
+            logbook = self._logbook
             logbook.clock_entries = self._clock_entries
             self._clock_entries = list(logbook.clock_entries)
             self.mark_dirty()
@@ -814,7 +818,7 @@ class Heading:
     def clock_entries(self, value: list[Clock]) -> None:
         """Set clock entries and synchronize them into the logbook drawer."""
         self._clock_entries = list(value)
-        logbook = self._ensure_logbook()
+        logbook = self._logbook
         logbook.clock_entries = self._clock_entries
         self._clock_entries = list(logbook.clock_entries)
         self.mark_dirty()
@@ -1164,8 +1168,23 @@ class Heading:
 
         if not body_repeats:
             self._repeats = list(self._logbook.repeats)
-            return
-        self._repeats = [*self._logbook.repeats, *body_repeats]
+        else:
+            self._repeats = [*self._logbook.repeats, *body_repeats]
+
+        # NOTE Attach the document for state comparisons of programmatically created repeats.
+        for repeat in self._repeats:
+            repeat.attach_document(self._document)
+
+    def _extract_logbook_repeats(self, repeats: Sequence[Repeat]) -> list[Repeat]:
+        """Return repeats that should be serialized into the heading logbook."""
+        body_repeats, _ = _recover_heading_body_lists_and_extract_clocks(
+            self._body,
+            document=self._document,
+        )
+        if not body_repeats:
+            return list(repeats)
+        body_repeat_ids = {id(repeat) for repeat in body_repeats}
+        return [repeat for repeat in repeats if id(repeat) not in body_repeat_ids]
 
     def _sync_clock_entries(self) -> None:
         """Synchronize clock cache from logbook and heading body."""
@@ -1178,10 +1197,6 @@ class Heading:
             self._clock_entries = list(self._logbook.clock_entries)
             return
         self._clock_entries = [*self._logbook.clock_entries, *body_clocks]
-
-    def _ensure_logbook(self) -> Logbook:
-        """Return heading logbook drawer."""
-        return self._logbook
 
     def _set_planning_timestamp(
         self,

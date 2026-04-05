@@ -27,6 +27,71 @@ def test_repeat_parses_logbook_item_without_note() -> None:
     assert repeat.body == []
 
 
+def test_repeat_is_completed_uses_document_done_states() -> None:
+    """Repeat completion follows owning document done TODO states."""
+    document = loads(
+        "#+TODO: TODO | DONE\n"
+        "* H\n"
+        ":LOGBOOK:\n"
+        '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n'
+        ":END:\n"
+    )
+
+    repeat = document.children[0].repeats[0]
+
+    assert repeat.is_completed is True
+
+
+def test_repeat_is_completed_false_when_state_not_in_done_states() -> None:
+    """Repeat completion is false when after-state is not a done state."""
+    document = loads(
+        "#+TODO: TODO | CANCELLED\n"
+        "* H\n"
+        ":LOGBOOK:\n"
+        '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n'
+        ":END:\n"
+    )
+
+    repeat = document.children[0].repeats[0]
+
+    assert repeat.is_completed is False
+
+
+def test_repeat_is_completed_false_without_parse_backed_document() -> None:
+    """Programmatic repeats remain incomplete when detached from parse document."""
+    repeat = Repeat(
+        after="DONE",
+        before="TODO",
+        timestamp=Timestamp(
+            is_active=False,
+            start_year=2026,
+            start_month=3,
+            start_day=8,
+            start_dayname="Sun",
+            start_hour=17,
+            start_minute=59,
+        ),
+    )
+
+    assert repeat.is_completed is False
+
+
+def test_repeat_is_completed_false_when_detached_from_document() -> None:
+    """Detached repeats return false when completion context is unknown."""
+    repeat = Repeat(
+        after="DONE",
+        before="TODO",
+        timestamp=Timestamp(
+            is_active=False,
+            start_year=2026,
+            start_month=3,
+            start_day=8,
+        ),
+    )
+
+    assert repeat.is_completed is False
+
+
 def test_repeat_constructor_accepts_raw_string_rich_text_fields() -> None:
     """Repeat constructor accepts raw strings for item tag and first line."""
     repeat = Repeat(
@@ -125,11 +190,11 @@ def test_repeats_setter_creates_logbook_when_missing() -> None:
 
 
 def test_repeats_append_creates_logbook_when_missing() -> None:
-    """Adding a task via ``add_repeated_task`` creates a logbook if absent."""
+    """Adding a task via ``add_repeat`` creates a logbook if absent."""
     document = loads("* H\n")
     heading = document.children[0]
 
-    heading.add_repeated_task(
+    heading.add_repeat(
         Repeat(
             after="DONE",
             before="TODO",
@@ -148,6 +213,54 @@ def test_repeats_append_creates_logbook_when_missing() -> None:
     assert isinstance(heading.logbook, Logbook)
     assert len(heading.repeats) == 1
     assert len(heading.logbook.repeats) == 1
+
+
+def test_add_repeat_does_not_duplicate_existing_body_repeat() -> None:
+    """Adding a logbook repeat leaves recovered heading-body repeats unique."""
+    document = loads("* H\n" '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n')
+    heading = document.children[0]
+    body_repeat = heading.repeats[0]
+
+    heading.add_repeat(
+        Repeat(
+            after="CANCELLED",
+            before="TODO",
+            timestamp=Timestamp(
+                is_active=False,
+                start_year=2026,
+                start_month=3,
+                start_day=9,
+            ),
+        )
+    )
+
+    assert len(heading.repeats) == 2
+    assert len(heading.logbook.repeats) == 1
+    assert all(repeat is not body_repeat for repeat in heading.logbook.repeats)
+
+
+def test_repeats_append_does_not_duplicate_existing_body_repeat() -> None:
+    """Mutating heading repeats keeps body repeats out of logbook serialization."""
+    document = loads("* H\n" '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n')
+    heading = document.children[0]
+    body_repeat = heading.repeats[0]
+
+    heading.repeats.append(
+        Repeat(
+            after="CANCELLED",
+            before="TODO",
+            timestamp=Timestamp(
+                is_active=False,
+                start_year=2026,
+                start_month=3,
+                start_day=9,
+            ),
+        )
+    )
+
+    assert len(heading.repeats) == 2
+    assert len(heading.logbook.repeats) == 1
+    assert all(repeat is not body_repeat for repeat in heading.logbook.repeats)
 
 
 def test_heading_clock_cache_extracts_logbook_clock_entries() -> None:
@@ -227,6 +340,40 @@ def test_heading_body_lists_are_recovered_for_repeats() -> None:
     parsed = heading.body[0]
     assert isinstance(parsed.items[0], Repeat)
     assert heading.repeats == [parsed.items[0]]
+
+
+def test_heading_body_repeat_recovery_sets_document_for_completion() -> None:
+    """Recovered body repeats attach owning document for completion checks."""
+    document = loads(
+        "#+TODO: TODO | DONE\n"
+        "* H\n"
+        '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n'
+    )
+
+    repeat = document.children[0].repeats[0]
+
+    assert repeat.is_completed is True
+
+
+def test_heading_body_recovery_attaches_document_for_existing_repeat_items() -> None:
+    """Recovery stamps document onto pre-existing Repeat items in heading lists."""
+    document = loads("#+TODO: TODO | DONE\n* H\n")
+    heading = document.children[0]
+    repeat = Repeat(
+        after="DONE",
+        before="TODO",
+        timestamp=Timestamp(
+            is_active=False,
+            start_year=2026,
+            start_month=3,
+            start_day=8,
+        ),
+    )
+
+    heading.body = [List(items=[repeat])]
+
+    assert heading.repeats == [repeat]
+    assert repeat.is_completed is True
 
 
 def test_heading_body_nested_lists_are_not_recovered_for_repeats() -> None:

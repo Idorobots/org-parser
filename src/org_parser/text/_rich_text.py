@@ -174,6 +174,25 @@ class RichText:
         self.mark_dirty()
 
     @property
+    def trimmed(self) -> RichText:
+        """Return a new rich text value with outer whitespace removed.
+
+        The returned value preserves object identity for unchanged inline parts
+        where safe. Timestamp parts are cloned so each rich-text value keeps
+        its own mutable timestamp instances.
+        """
+        return _trim_rich_text_parts(self._parts)
+
+    @property
+    def stripped(self) -> RichText:
+        """Return a new rich text value with inline markup removed.
+
+        This keeps visible text content while removing emphasis delimiters and
+        bracket wrappers for links/citations/footnotes.
+        """
+        return RichText(_strip_inline_parts(self._parts))
+
+    @property
     def dirty(self) -> bool:
         """Whether this rich text has been mutated after creation."""
         return self._dirty
@@ -378,6 +397,178 @@ def _coerce_inline_object(part: InlineObject | str) -> InlineObject:
     if isinstance(part, str):
         return PlainText(part)
     return part
+
+
+def _trim_rich_text_parts(parts: list[InlineObject]) -> RichText:
+    """Return one trimmed rich-text copy from *parts*."""
+    bounds = _trimmed_visible_bounds(parts)
+    if bounds is None:
+        return RichText("")
+
+    left, right = bounds
+    if left == right:
+        return _trim_single_part(parts[left])
+    return _trim_part_range(parts, left=left, right=right)
+
+
+def _trimmed_visible_bounds(parts: list[InlineObject]) -> tuple[int, int] | None:
+    """Return inclusive bounds for non-whitespace rendered content."""
+    if not parts:
+        return None
+
+    left = 0
+    right = len(parts) - 1
+
+    while left <= right and str(parts[left]).strip() == "":
+        left += 1
+    if left > right:
+        return None
+
+    while right >= left and str(parts[right]).strip() == "":
+        right -= 1
+    return left, right
+
+
+def _trim_single_part(part: InlineObject) -> RichText:
+    """Return trimmed rich text for one remaining visible part."""
+    raw = str(part)
+    stripped = raw.strip()
+    if stripped == "":
+        return RichText("")
+    if stripped != raw:
+        return RichText([_trimmed_boundary_part(part, stripped)])
+    return RichText([_copy_part_for_trimmed(part)])
+
+
+def _trim_part_range(parts: list[InlineObject], *, left: int, right: int) -> RichText:
+    """Return trimmed rich text for a visible part range."""
+    first = parts[left]
+    first_raw = str(first)
+    first_lstripped = first_raw.lstrip()
+
+    last = parts[right]
+    last_raw = str(last)
+    last_rstripped = last_raw.rstrip()
+
+    trimmed_parts: list[InlineObject] = []
+    if first_lstripped != first_raw:
+        trimmed_parts.append(_trimmed_boundary_part(first, first_lstripped))
+    else:
+        trimmed_parts.append(_copy_part_for_trimmed(first))
+
+    trimmed_parts.extend(_copy_part_for_trimmed(part) for part in parts[left + 1 : right])
+
+    if last_rstripped != last_raw:
+        trimmed_parts.append(_trimmed_boundary_part(last, last_rstripped))
+    else:
+        trimmed_parts.append(_copy_part_for_trimmed(last))
+
+    return RichText(trimmed_parts)
+
+
+def _copy_part_for_trimmed(part: InlineObject) -> InlineObject:
+    """Return a safe part object for trimmed rich-text output."""
+    if isinstance(part, Timestamp):
+        return _clone_timestamp(part)
+    return part
+
+
+def _trimmed_boundary_part(_part: InlineObject, value: str) -> InlineObject:
+    """Return a boundary part updated to rendered *value*."""
+    return PlainText(value)
+
+
+def _clone_timestamp(timestamp: Timestamp) -> Timestamp:
+    """Return a detached clone of *timestamp*."""
+    return Timestamp(
+        is_active=timestamp.is_active,
+        start_year=timestamp.start_year,
+        start_month=timestamp.start_month,
+        start_day=timestamp.start_day,
+        start_dayname=timestamp.start_dayname,
+        start_hour=timestamp.start_hour,
+        start_minute=timestamp.start_minute,
+        end_year=timestamp.end_year,
+        end_month=timestamp.end_month,
+        end_day=timestamp.end_day,
+        end_dayname=timestamp.end_dayname,
+        end_hour=timestamp.end_hour,
+        end_minute=timestamp.end_minute,
+        repeater_mark=timestamp.repeater_mark,
+        repeater_value=timestamp.repeater_value,
+        repeater_unit=timestamp.repeater_unit,
+        repeater_cap_value=timestamp.repeater_cap_value,
+        repeater_cap_unit=timestamp.repeater_cap_unit,
+        delay_mark=timestamp.delay_mark,
+        delay_value=timestamp.delay_value,
+        delay_unit=timestamp.delay_unit,
+    )
+
+
+def _strip_inline_parts(parts: list[InlineObject]) -> list[InlineObject]:
+    """Return inline parts with markup wrappers stripped to visible text."""
+    stripped: list[InlineObject] = []
+    for part in parts:
+        _append_stripped_part(stripped, part)
+    return stripped
+
+
+def _append_stripped_part(out: list[InlineObject], part: InlineObject) -> None:
+    """Append stripped output for one inline *part* into *out*."""
+    if isinstance(part, PlainText):
+        _append_plain_text(out, part.text)
+    elif isinstance(
+        part,
+        Bold | Italic | Underline | StrikeThrough | Subscript | Superscript | RadioTarget,
+    ):
+        for nested in part.body:
+            _append_stripped_part(out, nested)
+    elif isinstance(part, Code | Verbatim):
+        _append_plain_text(out, part.body)
+    elif isinstance(part, RegularLink):
+        _append_stripped_link(out, part)
+    elif isinstance(part, FootnoteReference):
+        _append_stripped_footnote(out, part)
+    elif isinstance(part, Citation):
+        _append_plain_text(out, part.body or "")
+    elif isinstance(part, PlainLink):
+        _append_plain_text(out, f"{part.link_type}:{part.path}")
+    elif isinstance(part, AngleLink):
+        prefix = f"{part.link_type}:" if part.link_type is not None else ""
+        _append_plain_text(out, f"{prefix}{part.path}")
+    else:
+        _append_plain_text(out, str(part))
+
+
+def _append_stripped_link(out: list[InlineObject], link: RegularLink) -> None:
+    """Append stripped output for a regular bracket link."""
+    if link.description is None:
+        _append_plain_text(out, link.path)
+        return
+    for nested in link.description:
+        _append_stripped_part(out, nested)
+
+
+def _append_stripped_footnote(
+    out: list[InlineObject],
+    footnote: FootnoteReference,
+) -> None:
+    """Append stripped output for a footnote reference."""
+    if footnote.definition is None:
+        _append_plain_text(out, footnote.label or "")
+        return
+    for nested in footnote.definition:
+        _append_stripped_part(out, nested)
+
+
+def _append_plain_text(out: list[InlineObject], text: str) -> None:
+    """Append plain text while coalescing adjacent text parts."""
+    if text == "":
+        return
+    if out and isinstance(out[-1], PlainText):
+        out[-1] = PlainText(out[-1].text + text)
+        return
+    out.append(PlainText(text))
 
 
 def _parse_inline_nodes(

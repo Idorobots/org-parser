@@ -160,6 +160,148 @@ def test_rich_text_parts_append_marks_dirty() -> None:
     assert rich_text.text == "AB"
 
 
+def test_rich_text_trimmed_returns_new_value_with_outer_whitespace_removed() -> None:
+    """trimmed returns a new rich text with leading/trailing whitespace removed."""
+    prefix = PlainText("  leading ")
+    middle = Bold([PlainText("keep")])
+    suffix = PlainText(" trailing  ")
+    rich_text = RichText([prefix, middle, suffix])
+
+    trimmed = rich_text.trimmed
+
+    assert trimmed is not rich_text
+    assert str(trimmed) == "leading *keep* trailing"
+    assert str(rich_text) == "  leading *keep* trailing  "
+    assert trimmed.parts[0] is not prefix
+    assert trimmed.parts[1] is middle
+    assert trimmed.parts[-1] is not suffix
+
+
+def test_rich_text_trimmed_reuses_identity_for_unchanged_non_timestamp_parts() -> None:
+    """trimmed reuses existing immutable parts when no boundary trim is needed."""
+    first = Bold([PlainText("one")])
+    middle = PlainText(" and ")
+    last = Italic([PlainText("two")])
+    rich_text = RichText([first, middle, last])
+
+    trimmed = rich_text.trimmed
+
+    assert str(trimmed) == "*one* and /two/"
+    assert trimmed.parts[0] is first
+    assert trimmed.parts[1] is middle
+    assert trimmed.parts[2] is last
+
+
+def test_rich_text_trimmed_clones_timestamp_parts() -> None:
+    """trimmed clones timestamps so parent ownership remains independent."""
+    timestamp = Timestamp.from_source("<2025-01-01 Wed>")
+    rich_text = RichText([timestamp, PlainText(" item")])
+
+    trimmed = rich_text.trimmed
+
+    assert isinstance(trimmed.parts[0], Timestamp)
+    assert trimmed.parts[0] is not timestamp
+    assert str(trimmed.parts[0]) == str(timestamp)
+    assert timestamp.parent is rich_text
+    assert trimmed.parts[0].parent is trimmed
+
+
+def test_rich_text_trimmed_whitespace_only_yields_empty_text() -> None:
+    """trimmed returns an empty rich text when source is all whitespace."""
+    rich_text = RichText([PlainText(" \t"), PlainText("\n  ")])
+
+    trimmed = rich_text.trimmed
+
+    assert str(trimmed) == ""
+
+
+def test_rich_text_stripped_removes_nested_markup_wrappers() -> None:
+    """stripped drops emphasis wrappers while preserving nested body content."""
+    rich_text = RichText(
+        [
+            PlainText("pre "),
+            Bold([PlainText("bold "), Italic([PlainText("inner")])]),
+            PlainText(" post"),
+        ]
+    )
+
+    stripped = rich_text.stripped
+
+    assert str(stripped) == "pre bold inner post"
+    assert all(isinstance(part, PlainText) for part in stripped.parts)
+
+
+def test_rich_text_stripped_uses_descriptions_for_links_cites_and_footnotes() -> None:
+    """stripped renders descriptions first, otherwise raw link/cite/footnote values."""
+    rich_text = RichText(
+        [
+            RegularLink(
+                path="id:alpha", description=[PlainText("Desc "), Bold([PlainText("One")])]
+            ),
+            PlainText(" | "),
+            RegularLink(path="id:beta"),
+            PlainText(" | "),
+            Citation(body="@doe"),
+            PlainText(" | "),
+            FootnoteReference(definition=[PlainText("Note "), Italic([PlainText("Body")])]),
+            PlainText(" | "),
+            FootnoteReference(label="fn-id"),
+            PlainText(" | "),
+            AngleLink(path="//example.org", link_type="https"),
+            PlainText(" | "),
+            PlainLink("mailto", "person@example.org"),
+        ]
+    )
+
+    stripped = rich_text.stripped
+
+    assert str(stripped) == (
+        "Desc One | id:beta | @doe | Note Body | fn-id | "
+        "https://example.org | mailto:person@example.org"
+    )
+    assert all(isinstance(part, PlainText) for part in stripped.parts)
+
+
+def test_rich_text_stripped_uses_textual_form_for_other_inline_objects() -> None:
+    """stripped falls back to textual rendering for non-special inline objects."""
+    timestamp = Timestamp.from_source("<2025-01-01 Wed>")
+    rich_text = RichText(
+        [
+            timestamp,
+            PlainText(" "),
+            CompletionCounter("1/2"),
+            PlainText(" "),
+            Target("anchor"),
+        ]
+    )
+
+    stripped = rich_text.stripped
+
+    assert str(stripped) == "<2025-01-01 Wed> [1/2] <<anchor>>"
+    assert all(isinstance(part, PlainText) for part in stripped.parts)
+    assert timestamp.parent is rich_text
+
+
+def test_rich_text_stripped_returns_new_value_without_mutating_original() -> None:
+    """stripped produces a new RichText value and leaves source unchanged."""
+    rich_text = RichText(
+        [
+            PlainText(" * "),
+            Bold([PlainText("bold")]),
+            PlainText(" "),
+            RegularLink(path="id:x", description=[PlainText("desc")]),
+            PlainText(" \n"),
+        ]
+    )
+    before = str(rich_text)
+
+    stripped = rich_text.stripped
+
+    assert stripped is not rich_text
+    assert str(rich_text) == before
+    assert str(stripped) == " * bold desc \n"
+
+
 def test_paragraph_plain_text_children_keep_trailing_newlines(tmp_path: Path) -> None:
     """RichText built from paragraphs preserves line newlines."""
     content = "This is some text:\nMore text\nMore text\n"

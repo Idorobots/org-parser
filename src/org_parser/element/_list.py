@@ -281,6 +281,7 @@ class ListItem(Element):
         return build_semantic_repr(
             "ListItem",
             bullet=self._bullet,
+            ordered_counter=self._ordered_counter,
             counter_set=self._counter_set,
             checkbox=self._checkbox,
             item_tag=self._item_tag,
@@ -311,7 +312,7 @@ class Repeat(ListItem):
     >>> from org_parser.time import Timestamp
     >>> heading = loads("* TODO Heading 1").children[0]
     >>> ts = Timestamp.from_source("<2025-10-10>")
-    >>> heading.add_repeated_task(Repeat(after="DONE", before="TODO", timestamp=ts))
+    >>> heading.add_repeat(Repeat(after="DONE", before="TODO", timestamp=ts))
     >>> print(str(heading))
     * TODO Heading 1
     :LOGBOOK:
@@ -391,7 +392,7 @@ class Repeat(ListItem):
             parent=item.parent,
         )
         repeat._node = item._node
-        repeat._document = item._document
+        repeat.attach_document(document)
         return repeat
 
     @property
@@ -427,6 +428,15 @@ class Repeat(ListItem):
         self._timestamp = value
         self._timestamp.parent = self
         self.mark_dirty()
+
+    @property
+    def is_completed(self) -> bool:
+        """Whether this repeat transition moved into a done TODO state."""
+        return self._document is not None and self._after in self._document.done_states
+
+    def attach_document(self, value: Document | None) -> None:
+        """Attach owning document reference without changing dirty state."""
+        self._document = value
 
     def reformat(self) -> None:
         """Mark timestamp, any child content, and this entry dirty."""

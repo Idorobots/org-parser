@@ -48,16 +48,29 @@ def test_properties_are_mutable_and_dirty_on_set() -> None:
     assert str(properties) == ":PROPERTIES:\n:ID: beta\n:END:\n"
 
 
-def test_properties_constructor_accepts_string_dictionary_values() -> None:
-    """Constructor wraps raw string dictionary values as rich text."""
+def test_properties_constructor_preserves_assigned_value_types() -> None:
+    """Constructor stores mapping values as-is and adopts rich-text values."""
     properties = Properties(properties={"ID": "alpha", "CATEGORY": RichText("work")})
 
-    assert isinstance(properties["ID"], RichText)
-    assert isinstance(properties["CATEGORY"], RichText)
-    assert str(properties["ID"]) == "alpha"
-    assert str(properties["CATEGORY"]) == "work"
-    assert properties["ID"].parent is properties
-    assert properties["CATEGORY"].parent is properties
+    assert isinstance(properties["ID"], str)
+    category = properties["CATEGORY"]
+    assert isinstance(category, RichText)
+    assert properties["ID"] == "alpha"
+    assert str(category) == "work"
+    assert category.parent is properties
+
+
+def test_properties_support_arbitrary_values_and_stringify_for_rendering() -> None:
+    """Non-rich property values remain typed and stringify in drawer output."""
+    properties = Properties()
+
+    properties["foo"] = 23
+
+    count = properties["foo"]
+    assert count == 23
+    assert isinstance(count, int)
+    assert count * 2 == 46
+    assert str(properties) == ":PROPERTIES:\n:foo: 23\n:END:\n"
 
 
 def test_properties_value_mutation_bubbles_to_drawer_and_document() -> None:
@@ -68,7 +81,9 @@ def test_properties_value_mutation_bubbles_to_drawer_and_document() -> None:
     properties = document.properties
     assert properties is not None
 
-    properties["NAME"].text = "new"
+    name = properties["NAME"]
+    assert isinstance(name, RichText)
+    name.text = "new"
 
     assert properties.dirty is True
     assert document.dirty is True
@@ -224,17 +239,19 @@ def test_dirty_heading_drawer_order_is_properties_then_logbook() -> None:
 
 
 def test_heading_properties_setter_accepts_dictionary_values() -> None:
-    """Heading properties setter accepts raw dictionaries and wraps strings."""
+    """Heading properties setter stores dictionary values without coercion."""
     document = loads("* H\n")
     heading = document.children[0]
 
     heading.properties = {"ID": "abc", "CATEGORY": RichText("work")}
 
     assert isinstance(heading.properties, Properties)
-    assert isinstance(heading.properties["ID"], RichText)
-    assert str(heading.properties["ID"]) == "abc"
-    assert str(heading.properties["CATEGORY"]) == "work"
-    assert heading.properties["ID"].parent is heading.properties
+    assert heading.properties["ID"] == "abc"
+    assert isinstance(heading.properties["ID"], str)
+    heading_category = heading.properties["CATEGORY"]
+    assert isinstance(heading_category, RichText)
+    assert str(heading_category) == "work"
+    assert heading_category.parent is heading.properties
 
 
 def test_dirty_document_drawer_order_is_properties_then_logbook() -> None:
@@ -250,16 +267,18 @@ def test_dirty_document_drawer_order_is_properties_then_logbook() -> None:
 
 
 def test_document_properties_setter_accepts_dictionary_values() -> None:
-    """Document properties setter accepts raw dictionaries and wraps strings."""
+    """Document properties setter stores dictionary values without coercion."""
     document = loads("Text\n")
 
     document.properties = {"ID": "abc", "CATEGORY": RichText("work")}
 
     assert isinstance(document.properties, Properties)
-    assert isinstance(document.properties["ID"], RichText)
-    assert str(document.properties["ID"]) == "abc"
-    assert str(document.properties["CATEGORY"]) == "work"
-    assert document.properties["ID"].parent is document.properties
+    assert document.properties["ID"] == "abc"
+    assert isinstance(document.properties["ID"], str)
+    document_category = document.properties["CATEGORY"]
+    assert isinstance(document_category, RichText)
+    assert str(document_category) == "work"
+    assert document_category.parent is document.properties
 
 
 def test_dirty_document_omits_empty_default_drawers() -> None:

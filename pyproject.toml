@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "org-parser"
-version = "0.23.5"
+version = "0.24.0"
 description = "A parser for Org Mode documents"
 authors = ["Kajetan Rzepecki <k@spartan.works>"]
 maintainers = ["Kajetan Rzepecki <k@spartan.works>"]
@@ -30,7 +30,7 @@ packages = [{ include = "org_parser", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.12"
 tree-sitter = ">=0.25,<1.0"
-tree-sitter-org = ">=0.23.6"
+tree-sitter-org = "0.23.7"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.11"

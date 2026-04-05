@@ -888,6 +888,22 @@ class TestHeadingCategory:
         assert h.heading_category is not None
         assert str(h.heading_category) == "project"
 
+    def test_heading_category_coerces_non_rich_text_drawer_value(self) -> None:
+        """heading_category coerces non-rich CATEGORY values to RichText."""
+        from org_parser.element import Properties
+
+        doc = Document(filename="t.org")
+        h = Heading(
+            level=1,
+            document=doc,
+            parent=doc,
+            properties=Properties(properties={"CATEGORY": 23}, parent=None),
+        )
+
+        category = h.heading_category
+        assert isinstance(category, RichText)
+        assert str(category) == "23"
+
     # -- heading_category setter ---------------------------------------------
 
     def test_setter_creates_properties_drawer(self) -> None:

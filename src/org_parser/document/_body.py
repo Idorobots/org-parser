@@ -5,7 +5,7 @@ Used mostly by [org_parser.document.Document][] and [org_parser.document.Heading
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from org_parser._node import is_error_node, node_source
 from org_parser._nodes import INDENT
@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
     from org_parser.document._document import Document
     from org_parser.document._heading import Heading
-    from org_parser.text._rich_text import RichText
     from org_parser.time import Clock
 
 # NOTE: Callable is kept in TYPE_CHECKING for the dispatch dict type annotations.
@@ -51,7 +50,7 @@ def merge_properties_drawers(
     """
     if not drawers:
         return None
-    merged_values: dict[str, RichText] = {}
+    merged_values: dict[str, Any] = {}
     for drawer in drawers:
         for key, value in drawer.items():
             if key in merged_values:

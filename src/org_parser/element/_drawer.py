@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from org_parser._nodes import INDENT, NODE_PROPERTY
 from org_parser.element._dirty_list import DirtyList
@@ -19,7 +19,7 @@ from org_parser.element._element import (
 from org_parser.element._list import List, ListItem, Repeat
 from org_parser.element._structure import Indent
 from org_parser.element._structure_recovery import attach_affiliated_keywords
-from org_parser.text._rich_text import RichText, coerce_rich_text
+from org_parser.text._rich_text import RichText
 from org_parser.time import Clock
 
 if TYPE_CHECKING:
@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from org_parser.document._heading import Heading
 
 __all__ = ["Drawer", "Logbook", "Properties"]
+
+PropertyValue = Any
 
 
 class Drawer(Element):
@@ -201,7 +203,7 @@ class Logbook(Drawer):
         self._repeats: list[Repeat] = list(repeats)
         self._adopt_body(self._clock_entries)
         self._sync_clock_entries_into_body()
-        _sync_logbook_repeat_list(self, self._repeats, mark_dirty=False)
+        self._sync_repeats_into_body(mark_dirty=False)
 
     @property
     def body(self) -> list[Element]:
@@ -277,7 +279,7 @@ class Logbook(Drawer):
 
         def on_repeats_mutation(wrapped: DirtyList[Repeat]) -> None:
             self._repeats = list(wrapped)
-            _sync_logbook_repeat_list(self, self._repeats, mark_dirty=True)
+            self._sync_repeats_into_body(mark_dirty=True)
             self.mark_dirty()
 
         return DirtyList(self._repeats, on_mutation=on_repeats_mutation)
@@ -286,7 +288,7 @@ class Logbook(Drawer):
     def repeats(self, value: list[Repeat]) -> None:
         """Set logbook repeat entries."""
         self._repeats = list(value)
-        _sync_logbook_repeat_list(self, self._repeats, mark_dirty=True)
+        self._sync_repeats_into_body(mark_dirty=True)
         self.mark_dirty()
 
     def reformat(self) -> None:
@@ -339,13 +341,37 @@ class Logbook(Drawer):
         self._body = updated_body
         self._adopt_body(self._body)
 
+    def _sync_repeats_into_body(self, *, mark_dirty: bool) -> None:
+        """Synchronize explicit repeat entries into a concrete logbook list."""
+        if self._document is not None:
+            for repeat in self._repeats:
+                repeat.attach_document(self._document)
+
+        target_list: List | None = None
+        for element in _iter_repeat_candidate_lists(self.body):
+            if any(isinstance(item, Repeat) for item in element.items):
+                target_list = element
+                break
+
+        if target_list is None:
+            if not self._repeats:
+                return
+            target_list = List(items=list(self._repeats), parent=self)
+            if mark_dirty:
+                self.body = [*self.body, target_list]
+            else:
+                self.append_to_body_without_dirty(target_list)
+            return
+
+        target_list.set_items(list(self._repeats), mark_dirty=mark_dirty)
+
     def append_to_body_without_dirty(self, element: Element) -> None:
         """Append one body element without changing this drawer's dirty state."""
         self._body = [*self._body, element]
         self._adopt_body(self._body)
 
 
-class Properties(Element, MutableMapping[str, RichText]):
+class Properties(Element, MutableMapping[str, PropertyValue]):
     """Property drawer element with dictionary-like mutable access.
 
     Example:
@@ -366,14 +392,14 @@ class Properties(Element, MutableMapping[str, RichText]):
     def __init__(
         self,
         *,
-        properties: Mapping[str, RichText | str] | None = None,
+        properties: Mapping[str, PropertyValue] | None = None,
         parent: Document | Heading | Element | None = None,
     ) -> None:
         super().__init__(parent=parent)
-        self._properties: dict[str, RichText] = {}
+        self._properties: dict[str, PropertyValue] = {}
         if properties is not None:
             for key, value in properties.items():
-                self._set_property(key, coerce_rich_text(value), mark_dirty=False)
+                self._set_property(key, value, mark_dirty=False)
 
     @classmethod
     def from_node(
@@ -406,7 +432,7 @@ class Properties(Element, MutableMapping[str, RichText]):
     def _set_property(
         self,
         key: str,
-        value: RichText,
+        value: PropertyValue,
         *,
         mark_dirty: bool,
     ) -> None:
@@ -414,17 +440,18 @@ class Properties(Element, MutableMapping[str, RichText]):
         if key in self._properties:
             del self._properties[key]
         self._properties[key] = value
-        value.parent = self
+        if isinstance(value, RichText):
+            value.parent = self
         if mark_dirty:
             self.mark_dirty()
 
-    def __getitem__(self, key: str) -> RichText:
-        """Return the rich-text value for one property key."""
+    def __getitem__(self, key: str) -> PropertyValue:
+        """Return the stored value for one property key."""
         return self._properties[key]
 
-    def __setitem__(self, key: str, value: RichText | str) -> None:
+    def __setitem__(self, key: str, value: PropertyValue) -> None:
         """Set one property value."""
-        self._set_property(key, coerce_rich_text(value), mark_dirty=True)
+        self._set_property(key, value, mark_dirty=True)
 
     def __delitem__(self, key: str) -> None:
         """Delete one property key."""
@@ -440,9 +467,10 @@ class Properties(Element, MutableMapping[str, RichText]):
         return len(self._properties)
 
     def reformat(self) -> None:
-        """Mark all property values and this drawer dirty."""
+        """Mark rich-text values and this drawer dirty."""
         for value in self._properties.values():
-            value.reformat()
+            if isinstance(value, RichText):
+                value.reformat()
         self.mark_dirty()
 
     def __str__(self) -> str:
@@ -537,29 +565,3 @@ def _iter_repeat_candidate_lists(elements: list[Element]) -> Iterator[List]:
             continue
         if isinstance(element, Indent):
             yield from _iter_repeat_candidate_lists(element.body)
-
-
-def _sync_logbook_repeat_list(
-    logbook: Logbook,
-    repeats: list[Repeat],
-    *,
-    mark_dirty: bool,
-) -> None:
-    """Synchronize explicit repeat entries into a concrete logbook list."""
-    target_list: List | None = None
-    for element in _iter_repeat_candidate_lists(logbook.body):
-        if any(isinstance(item, Repeat) for item in element.items):
-            target_list = element
-            break
-
-    if target_list is None:
-        if not repeats:
-            return
-        target_list = List(items=list(repeats), parent=logbook)
-        if mark_dirty:
-            logbook.body = [*logbook.body, target_list]
-        else:
-            logbook.append_to_body_without_dirty(target_list)
-        return
-
-    target_list.set_items(list(repeats), mark_dirty=mark_dirty)
