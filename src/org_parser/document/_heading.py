@@ -750,6 +750,7 @@ class Heading:
             logbook = self._ensure_logbook()
             logbook.repeats = self._repeats
             self._repeats = list(logbook.repeats)
+            self._sync_repeats()
             self.mark_dirty()
 
         return DirtyList(self._repeats, on_mutation=on_repeats_mutation)
@@ -785,6 +786,7 @@ class Heading:
         self._repeats = [*self._repeats, repeat]
         logbook = self._ensure_logbook()
         logbook.repeats = self._repeats
+        self._sync_repeats()
         self.mark_dirty()
 
     @property
@@ -1165,14 +1167,15 @@ class Heading:
             self._body,
             document=self._document,
         )
-        # NOTE Attach the document for state comparisons of programmatically created repeats.
-        for repeat in body_repeats:
-            repeat.attach_document(self._document)
 
         if not body_repeats:
             self._repeats = list(self._logbook.repeats)
-            return
-        self._repeats = [*self._logbook.repeats, *body_repeats]
+        else:
+            self._repeats = [*self._logbook.repeats, *body_repeats]
+
+        # NOTE Attach the document for state comparisons of programmatically created repeats.
+        for repeat in self._repeats:
+            repeat.attach_document(self._document)
 
     def _sync_clock_entries(self) -> None:
         """Synchronize clock cache from logbook and heading body."""
