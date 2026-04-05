@@ -20,7 +20,10 @@ Ordered list representation omits the counter (and likely other fileds), it only
 :END:
 Add a new read-only attribute to the =RichText= class that returns a new =RichText= object that has any leading or trailing whitespace removed.
 
-** TODO =RichText.stripped=
+** DONE =RichText.stripped=
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-04-05 Sun 19:21]
+:END:
 Add a new read-only attribute to the =RichText= class that returns a new =RichText= object that has inline markup stripped according to the following rules:
 - Bold, italic, underline etc markup is replaced with the raw body without the markup. Take special care for nested markup.
 - Links, cites and footnotes with a description are replaced with the description.

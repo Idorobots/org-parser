@@ -184,6 +184,15 @@ class RichText:
         return _trim_rich_text_parts(self._parts)
 
     @property
+    def stripped(self) -> RichText:
+        """Return a new rich text value with inline markup removed.
+
+        This keeps visible text content while removing emphasis delimiters and
+        bracket wrappers for links/citations/footnotes.
+        """
+        return RichText(_strip_inline_parts(self._parts))
+
+    @property
     def dirty(self) -> bool:
         """Whether this rich text has been mutated after creation."""
         return self._dirty
@@ -494,6 +503,72 @@ def _clone_timestamp(timestamp: Timestamp) -> Timestamp:
         delay_value=timestamp.delay_value,
         delay_unit=timestamp.delay_unit,
     )
+
+
+def _strip_inline_parts(parts: list[InlineObject]) -> list[InlineObject]:
+    """Return inline parts with markup wrappers stripped to visible text."""
+    stripped: list[InlineObject] = []
+    for part in parts:
+        _append_stripped_part(stripped, part)
+    return stripped
+
+
+def _append_stripped_part(out: list[InlineObject], part: InlineObject) -> None:
+    """Append stripped output for one inline *part* into *out*."""
+    if isinstance(part, PlainText):
+        _append_plain_text(out, part.text)
+    elif isinstance(
+        part,
+        Bold | Italic | Underline | StrikeThrough | Subscript | Superscript | RadioTarget,
+    ):
+        for nested in part.body:
+            _append_stripped_part(out, nested)
+    elif isinstance(part, Code | Verbatim):
+        _append_plain_text(out, part.body)
+    elif isinstance(part, RegularLink):
+        _append_stripped_link(out, part)
+    elif isinstance(part, FootnoteReference):
+        _append_stripped_footnote(out, part)
+    elif isinstance(part, Citation):
+        _append_plain_text(out, part.body or "")
+    elif isinstance(part, PlainLink):
+        _append_plain_text(out, f"{part.link_type}:{part.path}")
+    elif isinstance(part, AngleLink):
+        prefix = f"{part.link_type}:" if part.link_type is not None else ""
+        _append_plain_text(out, f"{prefix}{part.path}")
+    else:
+        _append_plain_text(out, str(part))
+
+
+def _append_stripped_link(out: list[InlineObject], link: RegularLink) -> None:
+    """Append stripped output for a regular bracket link."""
+    if link.description is None:
+        _append_plain_text(out, link.path)
+        return
+    for nested in link.description:
+        _append_stripped_part(out, nested)
+
+
+def _append_stripped_footnote(
+    out: list[InlineObject],
+    footnote: FootnoteReference,
+) -> None:
+    """Append stripped output for a footnote reference."""
+    if footnote.definition is None:
+        _append_plain_text(out, footnote.label or "")
+        return
+    for nested in footnote.definition:
+        _append_stripped_part(out, nested)
+
+
+def _append_plain_text(out: list[InlineObject], text: str) -> None:
+    """Append plain text while coalescing adjacent text parts."""
+    if text == "":
+        return
+    if out and isinstance(out[-1], PlainText):
+        out[-1] = PlainText(out[-1].text + text)
+        return
+    out.append(PlainText(text))
 
 
 def _parse_inline_nodes(
