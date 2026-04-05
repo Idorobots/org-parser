@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from org_parser._node import is_error_node
 from org_parser._nodes import (
@@ -473,7 +473,7 @@ class Document:
         return self._properties
 
     @properties.setter
-    def properties(self, value: Properties | dict[str, RichText | str] | None) -> None:
+    def properties(self, value: Properties | dict[str, Any] | None) -> None:
         """Set merged ``PROPERTIES`` drawer.
 
         Assigning ``None`` resets this to an empty drawer instance.

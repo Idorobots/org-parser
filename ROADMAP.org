@@ -32,7 +32,10 @@ Add a new read-only attribute to the =RichText= class that returns a new =RichTe
 
 The goal is for the =stripped= attribute to be a visual representation of a string of =RichText= without the markup. Essentially, =stripped= rich text will consist mostly of plaintext objects.
 
-** TODO =Properties= values to accept any type
+** DONE =Properties= values to accept any type
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-04-05 Sun 20:26]
+:END:
 It should be possible to set any property to any type. These values should be aucomatically stringified for dirty rendering, but otherwise accessible as-is. I.e.:
 
 #+begin_example
@@ -45,6 +48,26 @@ It should be possible to set any property to any type. These values should be au
 :END:
 #+end_example
 
+*** DONE src/org_parser/document/_heading.py
+:PROPERTIES:
+:context: 
+:END:
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2026-04-05 Sun 20:26]
+:END:
+
+In file src/org_parser/document/_heading.py around line 514, near the ~class Heading:~
+
+#+begin_example
+         if "CATEGORY" in self._properties:
+-            return self._properties["CATEGORY"]
++            category = self._properties["CATEGORY"]
++            if isinstance(category, RichText):
++                return category
+         return None
+#+end_example
+
+Instead, please coerce the value to a =RichText=.
 ** DONE =Repeat.is_completed= convenience attribute
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2026-04-05 Sun 20:04]

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from org_parser._node import is_error_node
 from org_parser._nodes import (
@@ -506,7 +506,10 @@ class Heading:
         ```
         """
         if "CATEGORY" in self._properties:
-            return self._properties["CATEGORY"]
+            category = self._properties["CATEGORY"]
+            if isinstance(category, RichText):
+                return category
+            return coerce_rich_text(str(category))
         return None
 
     @heading_category.setter
@@ -672,7 +675,7 @@ class Heading:
         return self._properties
 
     @properties.setter
-    def properties(self, value: Properties | dict[str, RichText | str] | None) -> None:
+    def properties(self, value: Properties | dict[str, Any] | None) -> None:
         """Set merged heading ``PROPERTIES`` drawer.
 
         Assigning ``None`` resets this to an empty drawer instance.

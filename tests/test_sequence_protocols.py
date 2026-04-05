@@ -112,16 +112,19 @@ def test_container_block_sequence_uses_body_elements() -> None:
     assert str(block[0]) == "Inside\n"
 
 
-def test_properties_setitem_accepts_strings_and_rich_text() -> None:
-    """Properties accept both rich-text and plain-string assignments."""
+def test_properties_setitem_preserves_assigned_value_types() -> None:
+    """Properties preserve assigned value objects without coercion."""
     document = loads(":PROPERTIES:\n:ID: old\n:END:\n")
     properties = document.properties
 
     properties["ID"] = "new"
     properties["CATEGORY"] = RichText("work")
+    properties["COUNT"] = 23
 
-    assert str(properties["ID"]) == "new"
-    assert str(properties["CATEGORY"]) == "work"
+    assert properties["ID"] == "new"
+    assert isinstance(properties["ID"], str)
+    assert isinstance(properties["CATEGORY"], RichText)
+    assert properties["COUNT"] == 23
     assert document.dirty is True
 
 
