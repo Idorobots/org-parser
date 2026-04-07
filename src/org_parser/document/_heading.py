@@ -809,6 +809,7 @@ class Heading:
         """
 
         def on_clock_entries_mutation(wrapped: DirtyList[Clock]) -> None:
+            self._promote_body_clock_entries_into_logbook()
             self._clock_entries = list(wrapped)
             logbook = self._logbook
             logbook.clock_entries = self._clock_entries
@@ -820,6 +821,7 @@ class Heading:
     @clock_entries.setter
     def clock_entries(self, value: list[Clock]) -> None:
         """Set clock entries and synchronize them into the logbook drawer."""
+        self._promote_body_clock_entries_into_logbook()
         self._clock_entries = list(value)
         logbook = self._logbook
         logbook.clock_entries = self._clock_entries
@@ -1221,6 +1223,27 @@ class Heading:
             self._clock_entries = list(self._logbook.clock_entries)
             return
         self._clock_entries = [*self._logbook.clock_entries, *body_clocks]
+
+    def _promote_body_clock_entries_into_logbook(self) -> None:
+        """Move recovered heading-body clocks into the heading logbook."""
+        _, body_clocks = _recover_heading_body_lists_and_extract_clocks(
+            self._body,
+            document=self._document,
+        )
+        if not body_clocks:
+            return
+
+        cleaned_body, changed = _remove_clock_entries_from_elements(self._body)
+        if changed:
+            self._body = cleaned_body
+            self._adopt_elements(self._body)
+
+        existing_ids = {id(clock) for clock in self._logbook.clock_entries}
+        promoted = [clock for clock in body_clocks if id(clock) not in existing_ids]
+        if promoted:
+            self._logbook.clock_entries = [*self._logbook.clock_entries, *promoted]
+
+        self._sync_clock_entries()
 
     def _set_planning_timestamp(
         self,
@@ -1628,6 +1651,42 @@ def _remove_repeat_items_from_elements(
 
         if isinstance(element, Drawer):
             cleaned_body, body_changed = _remove_repeat_items_from_elements(list(element.body))
+            if body_changed:
+                changed = True
+                element.body = cleaned_body
+            updated_elements.append(element)
+            continue
+
+        updated_elements.append(element)
+
+    return updated_elements, changed
+
+
+def _remove_clock_entries_from_elements(
+    elements: list[Element],
+) -> tuple[list[Element], bool]:
+    """Return body elements with recovered clock entries removed."""
+    updated_elements: list[Element] = []
+    changed = False
+
+    for element in elements:
+        if isinstance(element, Clock):
+            changed = True
+            continue
+
+        if isinstance(element, Indent):
+            cleaned_body, body_changed = _remove_clock_entries_from_elements(list(element.body))
+            if body_changed:
+                changed = True
+                if cleaned_body:
+                    element.body = cleaned_body
+                    updated_elements.append(element)
+                continue
+            updated_elements.append(element)
+            continue
+
+        if isinstance(element, Drawer):
+            cleaned_body, body_changed = _remove_clock_entries_from_elements(list(element.body))
             if body_changed:
                 changed = True
                 element.body = cleaned_body

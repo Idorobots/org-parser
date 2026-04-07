@@ -384,6 +384,53 @@ def test_heading_clock_setter_creates_logbook_when_missing() -> None:
     assert heading.logbook.body[0] is heading.clock_entries[0]
 
 
+def test_clock_entries_append_promotes_existing_body_clocks_into_logbook() -> None:
+    """Appending heading clocks moves recovered body clocks into the logbook."""
+    document = loads(
+        "* H\n"
+        ":NOTE:\n"
+        "CLOCK: [2025-01-08 Wed 09:00]--[2025-01-08 Wed 09:30] =>  0:30\n"
+        ":END:\n"
+    )
+    heading = document.children[0]
+    body_clock = heading.clock_entries[0]
+
+    heading.clock_entries.append(
+        Clock(
+            timestamp=Timestamp(
+                is_active=False,
+                start_year=2026,
+                start_month=1,
+                start_day=1,
+            ),
+            duration="0:10",
+        )
+    )
+
+    assert len(heading.clock_entries) == 2
+    assert len(heading.logbook.clock_entries) == 2
+    assert any(clock is body_clock for clock in heading.logbook.clock_entries)
+    assert all("CLOCK:" not in str(element) for element in heading.body)
+
+
+def test_clock_entries_setter_clears_body_clocks() -> None:
+    """Assigning heading clocks removes recovered body clocks from body."""
+    document = loads(
+        "* H\n"
+        ":NOTE:\n"
+        "CLOCK: [2025-01-08 Wed 09:00]--[2025-01-08 Wed 09:30] =>  0:30\n"
+        ":END:\n"
+    )
+    heading = document.children[0]
+
+    heading.clock_entries = []
+
+    assert heading.clock_entries == []
+    assert heading.logbook.clock_entries == []
+    assert all("CLOCK:" not in str(element) for element in heading.body)
+    assert "CLOCK:" not in str(heading)
+
+
 def test_non_logbook_lists_do_not_convert_items_to_repeats() -> None:
     """Only logbook lists are interpreted as repeated-task entries."""
     document = loads('- State "DONE" from "TODO" [2026-03-08 Sun 17:59]\n')
