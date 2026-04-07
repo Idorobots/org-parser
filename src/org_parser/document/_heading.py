@@ -746,6 +746,7 @@ class Heading:
         """
 
         def on_repeats_mutation(wrapped: DirtyList[Repeat]) -> None:
+            self._promote_body_repeats_into_logbook()
             self._repeats = list(wrapped)
             logbook = self._logbook
             logbook.repeats = self._extract_logbook_repeats(self._repeats)
@@ -757,6 +758,7 @@ class Heading:
     @repeats.setter
     def repeats(self, value: list[Repeat]) -> None:
         """Set repeats and synchronize them into the logbook drawer."""
+        self._promote_body_repeats_into_logbook()
         self._repeats = list(value)
         logbook = self._logbook
         logbook.repeats = self._extract_logbook_repeats(self._repeats)
@@ -781,6 +783,7 @@ class Heading:
         :END:
         ```
         """
+        self._promote_body_repeats_into_logbook()
         self._repeats = [*self._repeats, repeat]
         logbook = self._logbook
         logbook.repeats = [*logbook.repeats, repeat]
@@ -1174,6 +1177,27 @@ class Heading:
         # NOTE Attach the document for state comparisons of programmatically created repeats.
         for repeat in self._repeats:
             repeat.attach_document(self._document)
+
+    def _promote_body_repeats_into_logbook(self) -> None:
+        """Move recovered heading-body repeats into the heading logbook."""
+        body_repeats, _ = _recover_heading_body_lists_and_extract_clocks(
+            self._body,
+            document=self._document,
+        )
+        if not body_repeats:
+            return
+
+        cleaned_body, changed = _remove_repeat_items_from_elements(self._body)
+        if changed:
+            self._body = cleaned_body
+            self._adopt_elements(self._body)
+
+        existing_ids = {id(repeat) for repeat in self._logbook.repeats}
+        promoted = [repeat for repeat in body_repeats if id(repeat) not in existing_ids]
+        if promoted:
+            self._logbook.repeats = [*self._logbook.repeats, *promoted]
+
+        self._sync_repeats()
 
     def _extract_logbook_repeats(self, repeats: Sequence[Repeat]) -> list[Repeat]:
         """Return repeats that should be serialized into the heading logbook."""
@@ -1570,6 +1594,49 @@ def _recover_heading_body_lists_and_extract_clocks(  # noqa: C901
             collect_from_drawer_body(element.body)
 
     return repeats, clocks
+
+
+def _remove_repeat_items_from_elements(
+    elements: list[Element],
+) -> tuple[list[Element], bool]:
+    """Return body elements with repeat list items removed."""
+    updated_elements: list[Element] = []
+    changed = False
+
+    for element in elements:
+        if isinstance(element, List):
+            kept_items = [item for item in element.items if not isinstance(item, Repeat)]
+            if len(kept_items) != len(element.items):
+                changed = True
+                if kept_items:
+                    element.set_items(kept_items, mark_dirty=False)
+                    updated_elements.append(element)
+                continue
+            updated_elements.append(element)
+            continue
+
+        if isinstance(element, Indent):
+            cleaned_body, body_changed = _remove_repeat_items_from_elements(list(element.body))
+            if body_changed:
+                changed = True
+                if cleaned_body:
+                    element.body = cleaned_body
+                    updated_elements.append(element)
+                continue
+            updated_elements.append(element)
+            continue
+
+        if isinstance(element, Drawer):
+            cleaned_body, body_changed = _remove_repeat_items_from_elements(list(element.body))
+            if body_changed:
+                changed = True
+                element.body = cleaned_body
+            updated_elements.append(element)
+            continue
+
+        updated_elements.append(element)
+
+    return updated_elements, changed
 
 
 def ensure_child_heading_level(child: Heading, *, parent_level: int) -> None:

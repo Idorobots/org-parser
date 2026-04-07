@@ -392,6 +392,15 @@ class Logbook(Drawer):
                 self.append_to_body_without_dirty(target_list)
             return
 
+        if not self._repeats:
+            updated_body = [element for element in self._body if element is not target_list]
+            if mark_dirty:
+                self.body = updated_body
+            else:
+                self._body = updated_body
+                self._adopt_body(self._body)
+            return
+
         target_list.set_items(list(self._repeats), mark_dirty=mark_dirty)
 
     def append_to_body_without_dirty(self, element: Element) -> None:

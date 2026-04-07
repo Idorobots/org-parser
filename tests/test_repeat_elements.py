@@ -268,8 +268,8 @@ def test_repeats_append_creates_logbook_when_missing() -> None:
     assert len(heading.logbook.repeats) == 1
 
 
-def test_add_repeat_does_not_duplicate_existing_body_repeat() -> None:
-    """Adding a logbook repeat leaves recovered heading-body repeats unique."""
+def test_add_repeat_promotes_existing_body_repeats_into_logbook() -> None:
+    """Adding a repeat moves recovered heading-body repeats into the logbook."""
     document = loads("* H\n" '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n')
     heading = document.children[0]
     body_repeat = heading.repeats[0]
@@ -288,12 +288,13 @@ def test_add_repeat_does_not_duplicate_existing_body_repeat() -> None:
     )
 
     assert len(heading.repeats) == 2
-    assert len(heading.logbook.repeats) == 1
-    assert all(repeat is not body_repeat for repeat in heading.logbook.repeats)
+    assert len(heading.logbook.repeats) == 2
+    assert any(repeat is body_repeat for repeat in heading.logbook.repeats)
+    assert heading.body == []
 
 
-def test_repeats_append_does_not_duplicate_existing_body_repeat() -> None:
-    """Mutating heading repeats keeps body repeats out of logbook serialization."""
+def test_repeats_append_promotes_existing_body_repeats_into_logbook() -> None:
+    """Appending to heading repeats moves body repeats into the logbook."""
     document = loads("* H\n" '- State "DONE"       from "TODO"       [2026-03-08 Sun 17:59]\n')
     heading = document.children[0]
     body_repeat = heading.repeats[0]
@@ -312,8 +313,27 @@ def test_repeats_append_does_not_duplicate_existing_body_repeat() -> None:
     )
 
     assert len(heading.repeats) == 2
-    assert len(heading.logbook.repeats) == 1
-    assert all(repeat is not body_repeat for repeat in heading.logbook.repeats)
+    assert len(heading.logbook.repeats) == 2
+    assert any(repeat is body_repeat for repeat in heading.logbook.repeats)
+    assert heading.body == []
+
+
+def test_repeats_setter_clears_body_repeats_and_removes_body_list() -> None:
+    """Assigning heading repeats clears pre-existing recovered body repeats."""
+    document = loads(
+        "* DONE Test\n"
+        '   - State "DONE"       from "ACTIVE"     [2012-10-05 pią 19:49]\n'
+        '   - State "ACTIVE"     from "BLOCKER"    [2012-10-03 śro 09:37]\n'
+        '   - State "BLOCKER"    from "BLOCKER"    [2012-09-19 śro 17:55]\n'
+    )
+    heading = document.children[0]
+
+    heading.repeats = []
+
+    assert heading.repeats == []
+    assert heading.logbook.repeats == []
+    assert heading.body == []
+    assert str(heading) == "* DONE Test\n"
 
 
 def test_heading_clock_cache_extracts_logbook_clock_entries() -> None:
